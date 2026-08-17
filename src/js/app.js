@@ -583,24 +583,22 @@ function setExportScale(v){
 window.setExportScale = setExportScale;
 
 function printCalendar(){
-  const cap = document.getElementById('calendar-capture');
-  if(cap.classList.contains('hidden')){
-    cap.classList.remove('hidden');
-    document.getElementById('yearView').classList.add('hidden');
-    renderTemplate(currentTemplate, currentYM().y, currentYM().m);
-  }
+  var cap = ensureCalendarVisible();
   if(typeof toggleDesignMode === 'function' && document.body.classList.contains('design-mode')) toggleDesignMode();
-  const savedZoom = cap.style.zoom;
+  if(typeof applyDesignOverrides === 'function') applyDesignOverrides(cap);
+  var savedZoom = cap.style.zoom;
   cap.style.zoom = '';
-  const controls = [];
-  cap.querySelectorAll('.row-controls').forEach(c => { if(c.style.display!=='none'){ controls.push(c); c.style.display='none'; } });
-  setTimeout(() => {
+  var controls = [];
+  cap.querySelectorAll('.row-controls').forEach(function(c){ if(c.style.display!=='none'){ controls.push(c); c.style.display='none'; } });
+  var changes = resolveAllCSSVars(cap);
+  setTimeout(function(){
     window.print();
-    setTimeout(() => {
-      controls.forEach(c => { c.style.display = ''; });
+    setTimeout(function(){
+      restoreCSSVars(changes);
+      controls.forEach(function(c){ c.style.display = ''; });
       cap.style.zoom = savedZoom;
-    }, 300);
-  }, 150);
+    }, 500);
+  }, 200);
 }
 window.printCalendar = printCalendar;
 
@@ -789,18 +787,58 @@ async function fetchHolidays(){
   }
 }
 
+const RESOLVE_PROPS = [
+  'color','backgroundColor','borderColor','borderTopColor','borderRightColor','borderBottomColor','borderLeftColor',
+  'boxShadow','textShadow','outlineColor',
+  'fontFamily','fontSize','fontWeight','fontStyle','lineHeight','letterSpacing',
+  'textDecorationColor'
+];
+function resolveAllCSSVars(root){
+  var changes = [];
+  if(!root) return changes;
+  (function walk(el){
+    var cs = window.getComputedStyle(el);
+    RESOLVE_PROPS.forEach(function(prop){
+      var cur = el.style.getPropertyValue(prop);
+      if(cur) return;
+      var val = cs.getPropertyValue(prop);
+      if(val && val !== 'none' && val !== 'normal' && val !== ''){
+        changes.push({el:el, prop:prop});
+        el.style.setProperty(prop, val);
+      }
+    });
+    Array.from(el.children).forEach(walk);
+  })(root);
+  return changes;
+}
+function restoreCSSVars(changes){
+  changes.forEach(function(c){ c.el.style.removeProperty(c.prop); });
+}
+function ensureCalendarVisible(){
+  var cap = document.getElementById('calendar-capture');
+  if(cap.classList.contains('hidden')){
+    cap.classList.remove('hidden');
+    document.getElementById('yearView').classList.add('hidden');
+    renderTemplate(currentTemplate, currentYM().y, currentYM().m);
+  }
+  return cap;
+}
+
 async function captureCanvas(el){
-  const target = el || document.getElementById('calendar-capture');
-  const savedZoom = target.style.zoom;
+  var target = el || document.getElementById('calendar-capture');
+  if(typeof applyDesignOverrides === 'function') applyDesignOverrides(target);
+  var savedZoom = target.style.zoom;
   target.style.zoom = '';
-  const controls = [];
-  target.querySelectorAll('.row-controls').forEach(c => {
+  var controls = [];
+  target.querySelectorAll('.row-controls').forEach(function(c){
     if(c.style.display !== 'none'){ controls.push(c); c.style.display = 'none'; }
   });
+  var changes = resolveAllCSSVars(target);
   try{
-    return await html2canvas(target, {scale:exportScale, backgroundColor:'#ffffff', useCORS:true});
+    return await html2canvas(target, {scale:exportScale, backgroundColor:'#ffffff', useCORS:true, logging:false, allowTaint:true});
   } finally {
-    controls.forEach(c => { c.style.display = ''; });
+    restoreCSSVars(changes);
+    controls.forEach(function(c){ c.style.display = ''; });
     target.style.zoom = savedZoom;
   }
 }
@@ -1032,14 +1070,16 @@ async function confirmExport(){
 window.confirmExport = confirmExport;
 
 async function exportPNGResized(targetPxW, targetPxH, mmW, mmH){
-  setStatus('Gerando PNG ('+mmW+'×'+mmH+'mm)...');
-  const cap = document.getElementById('calendar-capture');
-  const savedZoom = cap.style.zoom;
+  setStatus('Gerando PNG ('+mmW+' x '+mmH+'mm)...');
+  var cap = ensureCalendarVisible();
+  if(typeof applyDesignOverrides === 'function') applyDesignOverrides(cap);
+  var savedZoom = cap.style.zoom;
   cap.style.zoom = '';
-  const controls = [];
-  cap.querySelectorAll('.row-controls').forEach(c => { if(c.style.display!=='none'){ controls.push(c); c.style.display='none'; } });
+  var controls = [];
+  cap.querySelectorAll('.row-controls').forEach(function(c){ if(c.style.display!=='none'){ controls.push(c); c.style.display='none'; } });
+  var changes = resolveAllCSSVars(cap);
   try{
-    const canvas = await html2canvas(cap, {scale:exportScale, backgroundColor:'#ffffff', useCORS:true});
+    var canvas = await html2canvas(cap, {scale:exportScale, backgroundColor:'#ffffff', useCORS:true, logging:false, allowTaint:true});
     const out = document.createElement('canvas');
     out.width = targetPxW;
     out.height = targetPxH;
@@ -1058,42 +1098,46 @@ async function exportPNGResized(targetPxW, targetPxH, mmW, mmH){
     link.href = out.toDataURL('image/png');
     link.click();
   } finally {
-    controls.forEach(c => { c.style.display = ''; });
+    restoreCSSVars(changes);
+    controls.forEach(function(c){ c.style.display = ''; });
     cap.style.zoom = savedZoom;
     setStatus('');
   }
 }
 
 async function exportPDFResized(targetPxW, targetPxH, mmW, mmH){
-  setStatus('Gerando PDF ('+mmW+'×'+mmH+'mm)...');
-  const cap = document.getElementById('calendar-capture');
-  const savedZoom = cap.style.zoom;
+  setStatus('Gerando PDF ('+mmW+' x '+mmH+'mm)...');
+  var cap = ensureCalendarVisible();
+  if(typeof applyDesignOverrides === 'function') applyDesignOverrides(cap);
+  var savedZoom = cap.style.zoom;
   cap.style.zoom = '';
-  const controls = [];
-  cap.querySelectorAll('.row-controls').forEach(c => { if(c.style.display!=='none'){ controls.push(c); c.style.display='none'; } });
+  var controls = [];
+  cap.querySelectorAll('.row-controls').forEach(function(c){ if(c.style.display!=='none'){ controls.push(c); c.style.display='none'; } });
+  var changes = resolveAllCSSVars(cap);
   try{
-    const canvas = await html2canvas(cap, {scale:exportScale, backgroundColor:'#ffffff', useCORS:true});
-    const out = document.createElement('canvas');
+    var canvas = await html2canvas(cap, {scale:exportScale, backgroundColor:'#ffffff', useCORS:true, logging:false, allowTaint:true});
+    var out = document.createElement('canvas');
     out.width = targetPxW;
     out.height = targetPxH;
-    const ctx = out.getContext('2d');
+    var ctx = out.getContext('2d');
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, targetPxW, targetPxH);
-    const ratio = Math.min(targetPxW / canvas.width, targetPxH / canvas.height);
-    const dw = canvas.width * ratio;
-    const dh = canvas.height * ratio;
-    const dx = (targetPxW - dw) / 2;
-    const dy = (targetPxH - dh) / 2;
+    var ratio = Math.min(targetPxW / canvas.width, targetPxH / canvas.height);
+    var dw = canvas.width * ratio;
+    var dh = canvas.height * ratio;
+    var dx = (targetPxW - dw) / 2;
+    var dy = (targetPxH - dh) / 2;
     ctx.drawImage(canvas, dx, dy, dw, dh);
-    const imgData = out.toDataURL('image/png');
-    const { jsPDF } = window.jspdf;
-    const orient = targetPxW > targetPxH ? 'landscape' : 'portrait';
-    const pdf = new jsPDF({orientation:orient, unit:'mm', format:[mmW, mmH]});
+    var imgData = out.toDataURL('image/png');
+    var { jsPDF } = window.jspdf;
+    var orient = targetPxW > targetPxH ? 'landscape' : 'portrait';
+    var pdf = new jsPDF({orientation:orient, unit:'mm', format:[mmW, mmH]});
     pdf.addImage(imgData, 'PNG', 0, 0, mmW, mmH);
-    const {y, m} = currentYM();
-    pdf.save('calendario-'+MESES_PT_SLUG[m]+'-'+y+'-'+mmW+'x'+mmH+'mm.pdf');
+    var ym = currentYM();
+    pdf.save('calendario-'+MESES_PT_SLUG[ym.m]+'-'+ym.y+'-'+mmW+'x'+mmH+'mm.pdf');
   } finally {
-    controls.forEach(c => { c.style.display = ''; });
+    restoreCSSVars(changes);
+    controls.forEach(function(c){ c.style.display = ''; });
     cap.style.zoom = savedZoom;
     setStatus('');
   }

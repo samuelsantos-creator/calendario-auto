@@ -678,10 +678,21 @@
   }
 
   @media print{
-    body{ background:#fff; padding:0; }
+    body{ background:#fff; padding:0; margin:0; }
     .toolbar, .modal-overlay, .row-controls, .export-overlay,
-    .design-overlay, #designSelection, #designHover, .dp-tip, .dp-ball{ display:none !important; }
-    #calendar-capture{ box-shadow:none; border-radius:0; max-width:none; width:100%; }
+    .design-overlay, #designSelection, #designHover, .dp-tip, .dp-ball,
+    .dp-ball, .status-bar{ display:none !important; }
+    #calendar-capture{
+      box-shadow:none; border-radius:0; max-width:none; width:100%;
+      margin:0; padding:0;
+    }
+    #calendar-capture *{
+      -webkit-print-color-adjust:exact !important;
+      print-color-adjust:exact !important;
+      color-adjust:exact !important;
+    }
+    .cal-hero, .orig-hero{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+    table, th, td{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
   }
   @media (max-width:900px){
     .template-grid{ grid-template-columns:repeat(2,1fr); }
@@ -851,6 +862,8 @@
 
   @media print{
     .design-overlay, #designSelection, #designHover, .dp-tip, .dp-ball{ display:none !important; }
+    .dp-sidebar, aside{ display:none !important; }
+    .status-bar{ display:none !important; }
   }
 
   /* ---------- MODAL DE EXPORTAÇÃO ---------- */
