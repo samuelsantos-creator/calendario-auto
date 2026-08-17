@@ -491,8 +491,8 @@ __CSS__
         <div class="dp-page hidden" id="dpPage-presets">
           <div class="dp-group">
             <h3>Salvar como padrão do modelo</h3>
-            <p class="thint" style="margin-bottom:8px;">Salva no <strong>servidor</strong> como padrão para o template <strong id="dpCurrentTemplateName"></strong>. Todos os usuários verão este modelo ao abrir este template.</p>
-            <button class="btn small gold" onclick="dpSaveAsDefault()" style="width:100%;">Salvar como padrão no Servidor</button>
+            <p class="thint" style="margin-bottom:8px;">Salva o design atual como padrão para o template <strong id="dpCurrentTemplateName"></strong>. Sempre que abrir este template, o design salvo será aplicado automaticamente.</p>
+            <button class="btn small gold" onclick="dpSaveAsDefault()" style="width:100%;">Salvar como padrão</button>
             <button class="btn small secondary" onclick="dpClearDefault()" style="width:100%;margin-top:4px;">Limpar padrão salvo</button>
           </div>
           <div class="dp-group">
@@ -501,19 +501,18 @@ __CSS__
               <input type="text" id="dpPresetName" placeholder="Nome do modelo" class="dp-text">
               <button class="btn small gold" onclick="dpSavePreset()">Salvar</button>
             </div>
-            <p class="thint">Salva no servidor (compartilhado) e localmente (fallback).</p>
           </div>
           <div class="dp-group">
             <h3>Modelos salvos</h3>
             <div id="dpPresetList" class="dp-preset-list"></div>
           </div>
           <div class="dp-group">
-            <h3>Arquivo de design</h3>
+            <h3>Compartilhar design</h3>
             <div class="dp-row-btns">
               <label class="file-btn">Importar JSON<input type="file" accept="application/json" id="dpImportFile" hidden></label>
               <button class="btn small" onclick="dpExportJson()">Exportar JSON</button>
             </div>
-            <p class="thint">O JSON contém todo o design e pode ser compartilhado entre computadores sem servidor.</p>
+            <p class="thint">Exporte o design atual como JSON e envie para outra pessoa. Ela importa e aplica o mesmo modelo.</p>
           </div>
         </div>
       </div>

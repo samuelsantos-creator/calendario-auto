@@ -1,6 +1,6 @@
 # Calendario Corporativo - Progeral Global
 
-Editor de calendarios corporativos com identidade visual Progeral.
+Editor de calendarios corporativos com identidade visual Progeral. Aplicacao 100% client-side (HTML/CSS/JS), sem necessidade de backend.
 
 ## Modelos disponiveis
 
@@ -17,8 +17,7 @@ Editor de calendarios corporativos com identidade visual Progeral.
 - Temas e cores personalizaveis
 - Exportacao PNG, PDF e ZIP (12 meses)
 - Modo Design: arrastar, redimensionar e estilizar elementos
-- **Presets compartilhados** via servidor (SQLite)
-- Persistencia local (localStorage) como fallback
+- Presets locais (localStorage) com export/import JSON para compartilhar
 
 ## Estrutura do projeto
 
@@ -37,7 +36,6 @@ assets/
   bandeiras/         # Bandeiras dos paises
   marcadores/        # Marcadores de feriados
   plantas/           # Banners da planta
-server.py            # Backend Flask + SQLite (API de presets)
 build_assets.py      # Converte imagens para base64
 build_html.py        # Monta index.html final
 ```
@@ -58,46 +56,20 @@ O arquivo `index.html` gerado contem todo o aplicativo em um unico arquivo (~8MB
 
 ## Deploy
 
-### Opcao 1: Servidor com API (recomendado)
+Copie o arquivo `index.html` para qualquer servidor HTTP estatico:
 
-Para presets compartilhados entre usuarios, rode o servidor Flask:
+- Nginx
+- Apache
+- IIS
+- Node.js (`npx http-server`)
+- Qualquer outro servidor de arquivos estaticos
 
-```bash
-pip install flask
-python server.py              # porta 8080
-python server.py --port 3000  # porta customizada
-```
+Nao e necessario backend, banco de dados ou runtime adicional.
 
-O servidor:
-- Serve o `index.html` como pagina principal
-- Expoe a API REST de presets (`/api/presets`)
-- Cria automaticamente o banco `presets.db` (SQLite)
-- Qualquer pessoa que acesse o servidor pode salvar/carregar presets compartilhados
+## Compartilhar modelo
 
-### Opcao 2: Arquivo estatico (sem API)
-
-Copie o `index.html` para qualquer servidor HTTP estatico (Nginx, Apache, IIS, etc).
-Os presets serao salvos apenas no navegador do usuario (localStorage).
-
-## API de Presets
-
-| Metodo | Rota | Descricao |
-|--------|------|-----------|
-| GET | `/api/presets` | Listar todos os presets |
-| GET | `/api/presets/:id` | Buscar preset por ID |
-| POST | `/api/presets` | Salvar preset (upsert por nome) |
-| DELETE | `/api/presets/:id` | Excluir preset |
-| PUT | `/api/presets/:id/default` | Marcar como padrao do template |
-| GET | `/api/presets/defaults` | Buscar todos os pads default |
-
-### Exemplo de uso da API
-
-```bash
-# Salvar um preset
-curl -X POST http://localhost:8080/api/presets \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Meu Modelo","template":"original","data":{...}}'
-
-# Listar presets
-curl http://localhost:8080/api/presets
-```
+1. Configure o calendario no modo Design
+2. Vá em Modelos → Exportar JSON
+3. Envie o arquivo JSON para a pessoa
+4. Ela abre o app → Modelos → Importar JSON → seleciona o arquivo
+5. O design é aplicado automaticamente

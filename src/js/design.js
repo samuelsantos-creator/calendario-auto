@@ -768,19 +768,8 @@
   window.dpResetAll = dpResetAll;
 
   /* ---------------- presets / modelos salvos ---------------- */
-  const API_BASE = (location.origin.includes('localhost') || location.protocol === 'file:')
-    ? 'http://localhost:8080' : '';
-
-  function apiFetch(path, opts){
-    const url = API_BASE + path;
-    return fetch(url, opts).then(function(r){
-      if(!r.ok) throw new Error('Erro na API: '+r.status);
-      return r.json();
-    });
-  }
-
   function collectCurrentState(){
-    const ym = currentYM();
+    var ym = currentYM();
     return {
       savedAt: Date.now(),
       template: currentTemplate,
@@ -798,25 +787,13 @@
     };
   }
 
-  /* -------- salvar preset no SERVIDOR -------- */
   function dpSavePreset(){
     var name = elv('dpPresetName').value.trim();
     if(!name){ elv('dpPresetName').focus(); return; }
-    var snap = collectCurrentState();
-    var payload = { name: name, template: currentTemplate || '', data: snap };
-    designPresets[name] = snap;
+    designPresets[name] = collectCurrentState();
     saveDesignPresets();
     renderPresetList();
     elv('dpPresetName').value = '';
-    if(API_BASE){
-      apiFetch('/api/presets', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      }).then(function(){ renderPresetList(); }).catch(function(e){
-        console.warn('API offline, salvo apenas localmente:', e.message);
-      });
-    }
   }
   window.dpSavePreset = dpSavePreset;
 
@@ -830,74 +807,35 @@
   function dpCopyPreset(name){
     var snap = designPresets[name];
     if(!snap) return;
-    var copyName = name + ' (cópia)';
-    designPresets[copyName] = JSON.parse(JSON.stringify(snap));
-    designPresets[copyName].savedAt = Date.now();
+    designPresets[name + ' (cópia)'] = JSON.parse(JSON.stringify(snap));
+    designPresets[name + ' (cópia)'].savedAt = Date.now();
     saveDesignPresets();
     renderPresetList();
   }
   window.dpCopyPreset = dpCopyPreset;
 
-  function dpDeletePreset(name, serverId){
+  function dpDeletePreset(name){
     if(!confirm('Excluir o modelo "'+name+'"?')) return;
     delete designPresets[name];
     saveDesignPresets();
     renderPresetList();
-    if(API_BASE && serverId){
-      apiFetch('/api/presets/'+serverId, { method:'DELETE' })
-        .then(function(){ loadServerPresets(); })
-        .catch(function(){});
-    }
   }
   window.dpDeletePreset = dpDeletePreset;
 
-  /* -------- carregar presets do SERVIDOR -------- */
-  function loadServerPresets(){
-    if(!API_BASE){
-      renderPresetList();
-      return;
-    }
-    apiFetch('/api/presets').then(function(rows){
-      rows.forEach(function(row){
-        if(row.data && !designPresets[row.name]){
-          designPresets[row.name] = row.data;
-        }
-        if(row.data) designPresets[row.name]._serverId = row.id;
-        if(row.data) designPresets[row.name]._isDefault = row.is_default;
-      });
-      saveDesignPresets();
-      renderPresetList();
-    }).catch(function(e){
-      console.warn('API offline:', e.message);
-      renderPresetList();
-    });
+  /* -------- salvar como padrão local -------- */
+  var DEFAULT_KEY = 'cal_default_by_template';
+  function getDefaultsMap(){
+    try { return JSON.parse(localStorage.getItem(DEFAULT_KEY) || '{}'); } catch(e){ return {}; }
   }
 
-  /* -------- salvar como padrão no SERVIDOR -------- */
   function dpSaveAsDefault(){
     var snap = collectCurrentState();
     var tpl = currentTemplate || 'classic';
-    var name = 'PADRÃO — ' + templateDisplayName(tpl);
-    var payload = { name: name, template: tpl, data: snap, is_default: true };
-    if(API_BASE){
-      apiFetch('/api/presets', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      }).then(function(){
-        updateDefaultLabel();
-        loadServerPresets();
-        alert('Design salvo como padrão para "'+templateDisplayName(tpl)+'"! Todos os usuários verão este modelo.');
-      }).catch(function(e){
-        alert('Erro ao salvar no servidor: '+e.message);
-      });
-    } else {
-      var map = getDefaultsMap();
-      map[tpl] = snap;
-      localStorage.setItem(DEFAULT_KEY, JSON.stringify(map));
-      updateDefaultLabel();
-      alert('Design salvo localmente (servidor offline).');
-    }
+    var map = getDefaultsMap();
+    map[tpl] = snap;
+    localStorage.setItem(DEFAULT_KEY, JSON.stringify(map));
+    updateDefaultLabel();
+    alert('Design salvo como padrão para o template "'+templateDisplayName(tpl)+'"!');
   }
   window.dpSaveAsDefault = dpSaveAsDefault;
 
@@ -929,7 +867,7 @@
     var tpl = currentTemplate || 'classic';
     var map = getDefaultsMap();
     var has = !!map[tpl];
-    el.textContent = templateDisplayName(tpl) + (has ? ' (padrão local ✓)' : '');
+    el.textContent = templateDisplayName(tpl) + (has ? ' (padrão salvo ✓)' : '');
   }
   window.updateDefaultLabel = updateDefaultLabel;
 
@@ -937,7 +875,7 @@
     var box = elv('dpPresetList');
     var names = Object.keys(designPresets);
     if(!names.length){
-      box.innerHTML = '<p class="thint" style="color:#8a8f9c;font-size:12px;margin:4px 0;">Nenhum modelo salvo ainda. Configure e clique em Salvar.</p>';
+      box.innerHTML = '<p class="thint" style="color:#8a8f9c;font-size:12px;margin:4px 0;">Nenhum modelo salvo ainda.</p>';
       return;
     }
     box.innerHTML = '';
@@ -951,8 +889,7 @@
       var n = Object.keys((designPresets[name]||{}).elements || {}).length;
       var sub = document.createElement('div');
       sub.style.cssText = 'font-size:10px;color:#8a8f9c;font-weight:400;width:100%;';
-      var badge = designPresets[name]._isDefault ? ' ⭐ padrão' : '';
-      sub.textContent = (n > 0 ? n+' elementos personalizados' : 'sem personalização') + badge;
+      sub.textContent = n > 0 ? n+' elementos personalizados' : 'sem personalização';
       label.appendChild(sub);
       var btns = document.createElement('div');
       btns.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;';
@@ -969,7 +906,7 @@
       b2.className = 'btn small secondary';
       b2.style.color = '#e74c3c';
       b2.textContent = 'Excluir';
-      b2.onclick = (function(n, sid){ return function(){ dpDeletePreset(n, sid); }; })(name, designPresets[name]._serverId);
+      b2.onclick = (function(n){ return function(){ dpDeletePreset(n); }; })(name);
       btns.appendChild(b1);
       btns.appendChild(bCopy);
       btns.appendChild(b2);
@@ -1055,11 +992,11 @@
   /* ---------------- inicialização ---------------- */
   function initDesign(){
     document.getElementById('dpImportFile').addEventListener('change', function(){ dpImportFile(this); });
+    renderPresetList();
     syncGeneralPanel();
     applyDesignOverrides();
     setupBall();
     updateDefaultLabel();
-    loadServerPresets();
   }
 
   if(document.readyState === 'loading'){

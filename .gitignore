@@ -2,11 +2,6 @@
 assets_b64.json
 calendario_v3_template.html
 
-# Database
-presets.db
-presets.db-wal
-presets.db-shm
-
 # Python
 __pycache__/
 *.pyc
