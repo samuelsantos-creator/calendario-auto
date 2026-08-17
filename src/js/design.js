@@ -800,37 +800,76 @@
   function dpApplyPreset(name){
     const snap = designPresets[name];
     if(!snap) return;
-    if(snap.month) elv('monthPicker').value = snap.month;
-    if(snap.font && typeof changeFontFamily === 'function') changeFontFamily(snap.font);
-    if(snap.theme && typeof changeTheme === 'function') changeTheme(snap.theme);
-    if(typeof currentSloganText !== 'undefined') currentSloganText = snap.slogan || '';
-    if(typeof currentFooterIcon !== 'undefined') currentFooterIcon = snap.icon || '';
-    if(typeof currentDateOutline !== 'undefined') currentDateOutline = !!snap.outline;
-    if(typeof currentPlantBanner !== 'undefined') currentPlantBanner = snap.plantBanner || 'none';
-    if(typeof currentGridStyle !== 'undefined'){ currentGridStyle = snap.gridStyle || 'solid'; }
-    if(typeof selectedCountries !== 'undefined' && snap.countries){
-      selectedCountries = snap.countries.slice();
-      if(typeof renderCountryChips === 'function') renderCountryChips();
-      
-    }
-    const gsSel = document.getElementById('gridStyleSelect');
-    if(gsSel) gsSel.value = currentGridStyle;
-    designState.general = snap.general || {general:{}};
-    designState.elements = snap.elements || {};
-    const ym = currentYM();
-    refreshCurrentView(ym.y, ym.m);
-    syncPanel();
-    saveDesign();
-    saveDesignPresets();
+    applySnapshot(snap);
   }
   window.dpApplyPreset = dpApplyPreset;
 
+  function dpCopyPreset(name){
+    const snap = designPresets[name];
+    if(!snap) return;
+    const copyName = name + ' (cópia)';
+    designPresets[copyName] = JSON.parse(JSON.stringify(snap));
+    designPresets[copyName].savedAt = Date.now();
+    saveDesignPresets();
+    renderPresetList();
+  }
+  window.dpCopyPreset = dpCopyPreset;
+
   function dpDeletePreset(name){
+    if(!confirm('Excluir o modelo "'+name+'"?')) return;
     delete designPresets[name];
     saveDesignPresets();
     renderPresetList();
   }
   window.dpDeletePreset = dpDeletePreset;
+
+  /* -------- salvar como padrão do template -------- */
+  const DEFAULT_KEY = 'cal_default_by_template';
+  function getDefaultsMap(){
+    try { return JSON.parse(localStorage.getItem(DEFAULT_KEY) || '{}'); } catch(e){ return {}; }
+  }
+  function dpSaveAsDefault(){
+    const snap = collectCurrentState();
+    const tpl = currentTemplate || 'classic';
+    const map = getDefaultsMap();
+    map[tpl] = snap;
+    localStorage.setItem(DEFAULT_KEY, JSON.stringify(map));
+    updateDefaultLabel();
+    alert('Design salvo como padrão para o template "'+templateDisplayName(tpl)+'"!');
+  }
+  window.dpSaveAsDefault = dpSaveAsDefault;
+
+  function dpClearDefault(){
+    const tpl = currentTemplate || 'classic';
+    const map = getDefaultsMap();
+    delete map[tpl];
+    localStorage.setItem(DEFAULT_KEY, JSON.stringify(map));
+    updateDefaultLabel();
+    alert('Padrão removido para o template "'+templateDisplayName(tpl)+'".');
+  }
+  window.dpClearDefault = dpClearDefault;
+
+  function applyDefaultForTemplate(tpl){
+    const map = getDefaultsMap();
+    const snap = map[tpl];
+    if(snap) applySnapshot(snap);
+  }
+  window.applyDefaultForTemplate = applyDefaultForTemplate;
+
+  function templateDisplayName(tpl){
+    const map = { classic:'Clássico Executivo', compact:'Mesa Corporativa', quarterly:'Trimestral', desk:'Painel Único', minimal:'Minimalista', original:'Original Progeral' };
+    return map[tpl] || tpl;
+  }
+
+  function updateDefaultLabel(){
+    const el = elv('dpCurrentTemplateName');
+    if(!el) return;
+    const tpl = currentTemplate || 'classic';
+    const map = getDefaultsMap();
+    const has = !!map[tpl];
+    el.textContent = templateDisplayName(tpl) + (has ? ' (padrão salvo ✓)' : '');
+  }
+  window.updateDefaultLabel = updateDefaultLabel;
 
   function renderPresetList(){
     const box = elv('dpPresetList');
@@ -843,25 +882,36 @@
     names.forEach(name => {
       const item = document.createElement('div');
       item.className = 'dp-preset-item';
+      item.style.cssText = 'flex-wrap:wrap;';
       const label = document.createElement('div');
       label.className = 'name';
       label.textContent = name;
       const n = Object.keys(designPresets[name].elements || {}).length;
       const sub = document.createElement('div');
-      sub.style.cssText = 'font-size:10px;color:#8a8f9c;font-weight:400;';
+      sub.style.cssText = 'font-size:10px;color:#8a8f9c;font-weight:400;width:100%;';
       sub.textContent = n > 0 ? n+' elementos personalizados' : 'sem personalização';
       label.appendChild(sub);
+      const btns = document.createElement('div');
+      btns.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;';
       const b1 = document.createElement('button');
       b1.className = 'btn small gold';
       b1.textContent = 'Aplicar';
       b1.onclick = () => dpApplyPreset(name);
+      const bCopy = document.createElement('button');
+      bCopy.className = 'btn small secondary';
+      bCopy.textContent = 'Copiar';
+      bCopy.title = 'Cria uma cópia deste modelo';
+      bCopy.onclick = () => dpCopyPreset(name);
       const b2 = document.createElement('button');
       b2.className = 'btn small secondary';
+      b2.style.color = '#e74c3c';
       b2.textContent = 'Excluir';
       b2.onclick = () => dpDeletePreset(name);
+      btns.appendChild(b1);
+      btns.appendChild(bCopy);
+      btns.appendChild(b2);
       item.appendChild(label);
-      item.appendChild(b1);
-      item.appendChild(b2);
+      item.appendChild(btns);
       box.appendChild(item);
     });
   }
@@ -946,6 +996,7 @@
     syncGeneralPanel();
     applyDesignOverrides();
     setupBall();
+    updateDefaultLabel();
   }
 
   if(document.readyState === 'loading'){

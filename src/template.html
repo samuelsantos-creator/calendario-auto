@@ -488,7 +488,13 @@ __CSS__
 
         <div class="dp-page hidden" id="dpPage-presets">
           <div class="dp-group">
-            <h3>Salvar modelo atual</h3>
+            <h3>Salvar como padrão do modelo</h3>
+            <p class="thint" style="margin-bottom:8px;">Salva o design atual como padrão para o template <strong id="dpCurrentTemplateName"></strong>. Sempre que abrir este template, o design salvo será aplicado automaticamente.</p>
+            <button class="btn small gold" onclick="dpSaveAsDefault()" style="width:100%;">Salvar como padrão</button>
+            <button class="btn small secondary" onclick="dpClearDefault()" style="width:100%;margin-top:4px;">Limpar padrão salvo</button>
+          </div>
+          <div class="dp-group">
+            <h3>Salvar modelo nomeado</h3>
             <div class="dp-row-btns">
               <input type="text" id="dpPresetName" placeholder="Nome do modelo" class="dp-text">
               <button class="btn small gold" onclick="dpSavePreset()">Salvar</button>

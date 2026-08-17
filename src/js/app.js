@@ -641,6 +641,8 @@ function chooseTemplate(id){
   refreshCurrentView(y, m);
   fetchHolidays();
   saveState();
+  if(typeof updateDefaultLabel === 'function') updateDefaultLabel();
+  if(typeof applyDefaultForTemplate === 'function') applyDefaultForTemplate(id);
 }
 renderCountryChips();
 function openModal(){ document.getElementById('templateModal').classList.remove('hidden'); }

@@ -820,24 +820,26 @@
   .dp-preset-item button{ padding:5px 9px; font-size:11px; }
 
   #designSelection, #designHover{ position:fixed; z-index:1150; pointer-events:none; }
-  #designSelection{ border:2px solid var(--gold); box-shadow:0 0 0 1px rgba(255,255,255,.6), 0 4px 18px rgba(0,0,0,.25); }
+  #designSelection{ border:2.5px solid var(--gold); box-shadow:0 0 0 1px rgba(255,255,255,.8), 0 6px 24px rgba(0,0,0,.3); }
   #designSelection::before{
-    content:'arraste para mover'; position:absolute; top:-22px; left:-2px; background:var(--gold); color:var(--navy-deep);
-    font-size:9.5px; font-weight:800; letter-spacing:.4px; padding:2px 7px; border-radius:4px; white-space:nowrap; text-transform:uppercase;
+    content:'arraste para mover'; position:absolute; top:-26px; left:-2px; background:var(--gold); color:var(--navy-deep);
+    font-size:10px; font-weight:800; letter-spacing:.4px; padding:3px 10px; border-radius:5px; white-space:nowrap; text-transform:uppercase;
   }
-  #designHover{ border:1.5px dashed rgba(201,162,39,.9); background:rgba(201,162,39,.06); }
+  #designHover{ border:2px dashed rgba(201,162,39,.7); background:rgba(201,162,39,.04); transition:all .1s; }
   .design-handle{
-    position:absolute; width:12px; height:12px; background:#fff; border:2px solid var(--gold);
-    border-radius:3px; z-index:2;
+    position:absolute; width:16px; height:16px; background:#fff; border:2.5px solid var(--gold);
+    border-radius:4px; z-index:2; pointer-events:auto;
+    box-shadow:0 2px 6px rgba(0,0,0,.25); transition:transform .1s;
   }
-  .design-handle.nw{ top:-7px; left:-7px; cursor:nwse-resize; }
-  .design-handle.n{ top:-7px; left:calc(50% - 6px); cursor:ns-resize; }
-  .design-handle.ne{ top:-7px; right:-7px; cursor:nesw-resize; }
-  .design-handle.e{ top:calc(50% - 6px); right:-7px; cursor:ew-resize; }
-  .design-handle.se{ bottom:-7px; right:-7px; cursor:nwse-resize; }
-  .design-handle.s{ bottom:-7px; left:calc(50% - 6px); cursor:ns-resize; }
-  .design-handle.sw{ bottom:-7px; left:-7px; cursor:nesw-resize; }
-  .design-handle.w{ top:calc(50% - 6px); left:-7px; cursor:ew-resize; }
+  .design-handle:hover{ transform:scale(1.3); background:var(--gold); }
+  .design-handle.nw{ top:-9px; left:-9px; cursor:nwse-resize; }
+  .design-handle.n{ top:-9px; left:calc(50% - 8px); cursor:ns-resize; }
+  .design-handle.ne{ top:-9px; right:-9px; cursor:nesw-resize; }
+  .design-handle.e{ top:calc(50% - 8px); right:-9px; cursor:ew-resize; }
+  .design-handle.se{ bottom:-9px; right:-9px; cursor:nwse-resize; }
+  .design-handle.s{ bottom:-9px; left:calc(50% - 8px); cursor:ns-resize; }
+  .design-handle.sw{ bottom:-9px; left:-9px; cursor:nesw-resize; }
+  .design-handle.w{ top:calc(50% - 8px); left:-9px; cursor:ew-resize; }
 
   .dp-tip{
     position:fixed; left:50%; bottom:22px; transform:translateX(-50%);
