@@ -257,9 +257,9 @@ __CSS__
       <div class="tcard">
         <h2>Exportar</h2>
         <div class="trow">
-          <button class="btn" onclick="exportPNG()" id="btnPng">Baixar PNG</button>
-          <button class="btn secondary" onclick="exportPDF()" id="btnPdf">Baixar PDF</button>
-          <button class="btn secondary" onclick="printCalendar()">Imprimir</button>
+          <button class="btn" onclick="openExportModal('png')" id="btnPng">Baixar PNG</button>
+          <button class="btn secondary" onclick="openExportModal('pdf')" id="btnPdf">Baixar PDF</button>
+          <button class="btn secondary gold" onclick="printCalendar()">Imprimir</button>
           <label>Qualidade
             <select id="exportScaleSelect" onchange="setExportScale(this.value)">
               <option value="1">Rápida (1x)</option>
@@ -333,7 +333,7 @@ __CSS__
               <h3>Tamanho</h3>
               <label>Largura <input type="range" id="dpW" min="20" max="1600" step="2" oninput="dpSize('width', this.value)"><span class="dp-val" id="dpWv"></span></label>
               <label>Altura <input type="range" id="dpH" min="20" max="900" step="2" oninput="dpSize('height', this.value)"><span class="dp-val" id="dpHv"></span></label>
-              <label><input type="checkbox" id="dpKeepRatio" checked> Manter proporção</label>
+              <label><input type="checkbox" id="dpKeepRatio"> Manter proporção</label>
             </div>
 
             <div class="dp-group">
@@ -453,6 +453,36 @@ __CSS__
   <div id="designSelection" class="hidden"></div>
   <div id="designHover" class="hidden"></div>
   <div class="dp-tip hidden" id="dpTip">Modo Design ativado — clique em um elemento e arraste ou redimensione.</div>
+
+  <!-- MODAL DE EXPORTAÇÃO -->
+  <div class="export-overlay hidden" id="exportModal">
+    <div class="export-modal">
+      <div class="export-modal-head">
+        <h2 id="exportModalTitle">Exportar PNG</h2>
+        <button class="btn-close-export" onclick="closeExportModal()">×</button>
+      </div>
+      <div class="export-modal-body">
+        <p class="export-desc">Escolha o tamanho do papel para a exportação:</p>
+        <div class="export-sizes" id="exportSizes"></div>
+        <div class="export-preview">
+          <div class="export-preview-label">Pré-visualização do tamanho:</div>
+          <div class="export-preview-box" id="exportPreviewBox">
+            <div class="export-preview-page" id="exportPreviewPage"></div>
+          </div>
+          <div class="export-preview-info" id="exportPreviewInfo"></div>
+        </div>
+        <div class="export-orient">
+          <label>Orientação:</label>
+          <button class="btn small secondary active" id="orientLandscape" onclick="setExportOrient('landscape')">Paisagem</button>
+          <button class="btn small secondary" id="orientPortrait" onclick="setExportOrient('portrait')">Retrato</button>
+        </div>
+      </div>
+      <div class="export-modal-foot">
+        <button class="btn secondary" onclick="closeExportModal()">Cancelar</button>
+        <button class="btn gold" id="exportConfirmBtn" onclick="confirmExport()">Exportar</button>
+      </div>
+    </div>
+  </div>
 
 <script>
 __JS_APP__

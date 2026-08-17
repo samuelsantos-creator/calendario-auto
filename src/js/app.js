@@ -587,7 +587,17 @@ function printCalendar(){
     renderTemplate(currentTemplate, currentYM().y, currentYM().m);
   }
   if(typeof toggleDesignMode === 'function' && document.body.classList.contains('design-mode')) toggleDesignMode();
-  setTimeout(() => window.print(), 150);
+  const savedZoom = cap.style.zoom;
+  cap.style.zoom = '';
+  const controls = [];
+  cap.querySelectorAll('.row-controls').forEach(c => { if(c.style.display!=='none'){ controls.push(c); c.style.display='none'; } });
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => {
+      controls.forEach(c => { c.style.display = ''; });
+      cap.style.zoom = savedZoom;
+    }, 300);
+  }, 150);
 }
 window.printCalendar = printCalendar;
 
@@ -890,6 +900,198 @@ async function exportYearZip(){
   URL.revokeObjectURL(url);
   setStatus('');
   setButtonsDisabled(false);
+}
+
+/* ---------- MODAL DE EXPORTAÇÃO ---------- */
+const PAPER_SIZES = [
+  { id:'calendario-mesa', name:'Calendário Mesa', w:297, h:210, desc:'Formato paisagem largo (ideal para mesa)' },
+  { id:'carta',          name:'Carta (Letter)',   w:279, h:216, desc:'8.5 × 11 polegadas' },
+  { id:'oficio',         name:'Ofício',           w:330, h:216, desc:'8.5 × 13 polegadas' },
+  { id:'a4',             name:'A4',               w:210, h:297, desc:'210 × 297 mm' },
+  { id:'1-2',            name:'1:2 (Metade)',     w:148, h:210, desc:'Metade do A4 — meio calendário' },
+  { id:'personalizado',  name:'Personalizado',    w:0,   h:0,   desc:'Definir largura e altura manualmente' }
+];
+
+let exportModalType = 'png';
+let exportSelectedSize = 'calendario-mesa';
+let exportOrient = 'landscape';
+
+function openExportModal(type){
+  exportModalType = type;
+  exportSelectedSize = 'calendario-mesa';
+  exportOrient = 'landscape';
+  document.getElementById('exportModalTitle').textContent = type === 'png' ? 'Exportar PNG' : 'Exportar PDF';
+  renderExportSizes();
+  updateExportPreview();
+  document.getElementById('orientLandscape').classList.add('active');
+  document.getElementById('orientPortrait').classList.remove('active');
+  document.getElementById('exportModal').classList.remove('hidden');
+}
+window.openExportModal = openExportModal;
+
+function closeExportModal(){
+  document.getElementById('exportModal').classList.add('hidden');
+}
+window.closeExportModal = closeExportModal;
+
+function renderExportSizes(){
+  const box = document.getElementById('exportSizes');
+  box.innerHTML = PAPER_SIZES.map(s =>
+    '<div class="export-size-btn'+(s.id===exportSelectedSize?' selected':'')+'" onclick="selectExportSize(\''+s.id+'\')">'
+    + '<span class="size-name">'+s.name+'</span>'
+    + '<span class="size-dim">'+(s.id==='personalizado' ? 'Largura × Altura' : s.w+' × '+s.h+' mm')+'</span>'
+    + '<span class="size-desc">'+s.desc+'</span>'
+    + '</div>'
+  ).join('');
+}
+window.renderExportSizes = renderExportSizes;
+
+function selectExportSize(id){
+  exportSelectedSize = id;
+  renderExportSizes();
+  updateExportPreview();
+}
+window.selectExportSize = selectExportSize;
+
+function setExportOrient(o){
+  exportOrient = o;
+  document.getElementById('orientLandscape').classList.toggle('active', o==='landscape');
+  document.getElementById('orientPortrait').classList.toggle('active', o==='portrait');
+  updateExportPreview();
+}
+window.setExportOrient = setExportOrient;
+
+function updateExportPreview(){
+  const s = PAPER_SIZES.find(x => x.id === exportSelectedSize);
+  if(!s) return;
+  const box = document.getElementById('exportPreviewPage');
+  const info = document.getElementById('exportPreviewInfo');
+  let pw, ph;
+  if(exportSelectedSize === 'personalizado'){
+    pw = 200; ph = 150;
+    info.textContent = 'Defina o tamanho no próximo passo';
+  } else {
+    pw = s.w; ph = s.h;
+    if(exportOrient === 'landscape' && ph > pw){ const t=pw; pw=ph; ph=t; }
+    if(exportOrient === 'portrait' && pw > ph){ const t=pw; pw=ph; ph=t; }
+    info.textContent = pw+' × '+ph+' mm'+(exportOrient==='landscape'?' (paisagem)':' (retrato)');
+  }
+  const maxBox = 180;
+  const scale = Math.min(maxBox / pw, maxBox / ph);
+  box.style.width = Math.round(pw * scale) + 'px';
+  box.style.height = Math.round(ph * scale) + 'px';
+}
+window.updateExportPreview = updateExportPreview;
+
+function mmToPixels(mm, dpi){
+  return Math.round((mm / 25.4) * dpi);
+}
+
+async function confirmExport(){
+  const scope = document.getElementById('exportScope').value;
+  if(scope === 'year'){
+    closeExportModal();
+    if(exportModalType === 'png') await exportYearZip();
+    else await exportYearPDF();
+    return;
+  }
+
+  const s = PAPER_SIZES.find(x => x.id === exportSelectedSize);
+  if(!s) return;
+
+  let targetW, targetH;
+  if(exportSelectedSize === 'personalizado'){
+    const w = prompt('Largura em mm:', '297');
+    const h = prompt('Altura em mm:', '210');
+    if(!w || !h) return;
+    targetW = parseFloat(w);
+    targetH = parseFloat(h);
+  } else {
+    targetW = s.w; targetH = s.h;
+    if(exportOrient === 'landscape' && targetH > targetW){ const t=targetW; targetW=targetH; targetH=t; }
+    if(exportOrient === 'portrait' && targetW > targetH){ const t=targetW; targetW=targetH; targetH=t; }
+  }
+
+  closeExportModal();
+
+  const dpi = 300;
+  const pdfW = mmToPixels(targetW, dpi);
+  const pdfH = mmToPixels(targetH, dpi);
+
+  if(exportModalType === 'png'){
+    await exportPNGResized(pdfW, pdfH, targetW, targetH);
+  } else {
+    await exportPDFResized(pdfW, pdfH, targetW, targetH);
+  }
+}
+window.confirmExport = confirmExport;
+
+async function exportPNGResized(targetPxW, targetPxH, mmW, mmH){
+  setStatus('Gerando PNG ('+mmW+'×'+mmH+'mm)...');
+  const cap = document.getElementById('calendar-capture');
+  const savedZoom = cap.style.zoom;
+  cap.style.zoom = '';
+  const controls = [];
+  cap.querySelectorAll('.row-controls').forEach(c => { if(c.style.display!=='none'){ controls.push(c); c.style.display='none'; } });
+  try{
+    const canvas = await html2canvas(cap, {scale:exportScale, backgroundColor:'#ffffff', useCORS:true});
+    const out = document.createElement('canvas');
+    out.width = targetPxW;
+    out.height = targetPxH;
+    const ctx = out.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, targetPxW, targetPxH);
+    const ratio = Math.min(targetPxW / canvas.width, targetPxH / canvas.height);
+    const dw = canvas.width * ratio;
+    const dh = canvas.height * ratio;
+    const dx = (targetPxW - dw) / 2;
+    const dy = (targetPxH - dh) / 2;
+    ctx.drawImage(canvas, dx, dy, dw, dh);
+    const link = document.createElement('a');
+    const {y, m} = currentYM();
+    link.download = 'calendario-'+MESES_PT_SLUG[m]+'-'+y+'-'+mmW+'x'+mmH+'mm.png';
+    link.href = out.toDataURL('image/png');
+    link.click();
+  } finally {
+    controls.forEach(c => { c.style.display = ''; });
+    cap.style.zoom = savedZoom;
+    setStatus('');
+  }
+}
+
+async function exportPDFResized(targetPxW, targetPxH, mmW, mmH){
+  setStatus('Gerando PDF ('+mmW+'×'+mmH+'mm)...');
+  const cap = document.getElementById('calendar-capture');
+  const savedZoom = cap.style.zoom;
+  cap.style.zoom = '';
+  const controls = [];
+  cap.querySelectorAll('.row-controls').forEach(c => { if(c.style.display!=='none'){ controls.push(c); c.style.display='none'; } });
+  try{
+    const canvas = await html2canvas(cap, {scale:exportScale, backgroundColor:'#ffffff', useCORS:true});
+    const out = document.createElement('canvas');
+    out.width = targetPxW;
+    out.height = targetPxH;
+    const ctx = out.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, targetPxW, targetPxH);
+    const ratio = Math.min(targetPxW / canvas.width, targetPxH / canvas.height);
+    const dw = canvas.width * ratio;
+    const dh = canvas.height * ratio;
+    const dx = (targetPxW - dw) / 2;
+    const dy = (targetPxH - dh) / 2;
+    ctx.drawImage(canvas, dx, dy, dw, dh);
+    const imgData = out.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const orient = targetPxW > targetPxH ? 'landscape' : 'portrait';
+    const pdf = new jsPDF({orientation:orient, unit:'mm', format:[mmW, mmH]});
+    pdf.addImage(imgData, 'PNG', 0, 0, mmW, mmH);
+    const {y, m} = currentYM();
+    pdf.save('calendario-'+MESES_PT_SLUG[m]+'-'+y+'-'+mmW+'x'+mmH+'mm.pdf');
+  } finally {
+    controls.forEach(c => { c.style.display = ''; });
+    cap.style.zoom = savedZoom;
+    setStatus('');
+  }
 }
 
 /* ---------- PERSISTÊNCIA (localStorage) ---------- */

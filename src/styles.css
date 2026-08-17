@@ -619,8 +619,9 @@
 
   @media print{
     body{ background:#fff; padding:0; }
-    .toolbar, .modal-overlay, .row-controls{ display:none; }
-    #calendar-capture{ box-shadow:none; border-radius:0; }
+    .toolbar, .modal-overlay, .row-controls, .export-overlay,
+    .design-overlay, #designSelection, #designHover, .dp-tip, .dp-ball{ display:none !important; }
+    #calendar-capture{ box-shadow:none; border-radius:0; max-width:none; width:100%; }
   }
   @media (max-width:900px){
     .template-grid{ grid-template-columns:repeat(2,1fr); }
@@ -788,4 +789,64 @@
 
   @media print{
     .design-overlay, #designSelection, #designHover, .dp-tip, .dp-ball{ display:none !important; }
+  }
+
+  /* ---------- MODAL DE EXPORTAÇÃO ---------- */
+  .export-overlay{
+    position:fixed; inset:0; background:rgba(4,10,24,0.72);
+    display:flex; align-items:center; justify-content:center;
+    z-index:2000; padding:24px; backdrop-filter:blur(3px);
+  }
+  .export-overlay.hidden{ display:none; }
+  .export-modal{
+    background:#fff; border-radius:18px; max-width:560px; width:100%;
+    box-shadow:0 30px 70px rgba(0,0,0,0.45); border-top:5px solid var(--gold);
+    max-height:90vh; overflow-y:auto;
+  }
+  .export-modal-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 24px 16px; border-bottom:1px solid var(--line);
+  }
+  .export-modal-head h2{ margin:0; font-size:20px; color:var(--navy); font-weight:800; font-family:var(--font-title); }
+  .btn-close-export{
+    background:var(--cream); color:var(--navy); border:1px solid var(--line);
+    width:32px; height:32px; border-radius:8px; font-size:18px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-weight:700;
+  }
+  .btn-close-export:hover{ background:var(--line); }
+  .export-modal-body{ padding:20px 24px; }
+  .export-desc{ margin:0 0 16px; font-size:13px; color:#666; }
+  .export-sizes{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:20px; }
+  .export-size-btn{
+    border:1.5px solid var(--line); border-radius:10px; padding:12px 14px;
+    background:linear-gradient(180deg,#fff,var(--cream)); cursor:pointer;
+    display:flex; flex-direction:column; gap:3px; transition:all .15s;
+  }
+  .export-size-btn:hover{ border-color:var(--navy); box-shadow:0 4px 12px rgba(11,31,63,0.1); }
+  .export-size-btn.selected{ border-color:var(--gold); background:linear-gradient(180deg,#fffdf7,#fff); box-shadow:0 0 0 3px rgba(201,162,39,0.2); }
+  .export-size-btn .size-name{ font-weight:800; font-size:13px; color:var(--navy); }
+  .export-size-btn .size-dim{ font-size:11px; color:#8a8f9c; font-family:'IBM Plex Mono',monospace; }
+  .export-size-btn .size-desc{ font-size:10.5px; color:#999; margin-top:2px; }
+  .export-preview{ margin-bottom:16px; }
+  .export-preview-label{ font-size:11px; color:#8a8f9c; text-transform:uppercase; letter-spacing:.6px; font-weight:700; margin-bottom:8px; }
+  .export-preview-box{
+    background:#f4f2ed; border:1px solid var(--line); border-radius:8px;
+    padding:16px; display:flex; align-items:center; justify-content:center; min-height:120px;
+  }
+  .export-preview-page{
+    background:#fff; border:1.5px solid var(--navy); border-radius:3px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.12); transition:all .2s;
+  }
+  .export-preview-info{
+    font-size:11px; color:#8a8f9c; text-align:center; margin-top:8px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .export-orient{
+    display:flex; align-items:center; gap:8px; margin-bottom:4px;
+  }
+  .export-orient label{ font-size:12px; color:#555; font-weight:600; }
+  .export-orient .btn.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
+  .export-modal-foot{
+    display:flex; justify-content:flex-end; gap:10px;
+    padding:16px 24px 20px; border-top:1px solid var(--line);
   }
