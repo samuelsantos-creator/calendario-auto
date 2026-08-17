@@ -204,7 +204,7 @@ __CSS__
           <button class="btn small secondary" onclick="shiftPicker(1)" title="Próximo mês">▶</button>
           <button class="btn small" onclick="applyMonth()">Aplicar</button>
           <label class="tblk">Escopo de exportação
-            <select id="exportScope" onchange="applyScope()"><option value="month">Mês atual</option><option value="year">Ano completo (12 meses)</option></select>
+            <select id="exportScope" onchange="applyScope()"><option value="month">Mês atual</option></select>
           </label>
         </div>
       </div>
@@ -326,6 +326,8 @@ __CSS__
           <button class="btn" onclick="openExportModal('png')" id="btnPng">Baixar PNG</button>
           <button class="btn secondary" onclick="openExportModal('pdf')" id="btnPdf">Baixar PDF</button>
           <button class="btn secondary gold" onclick="printCalendar()">Imprimir</button>
+          <button class="btn secondary" onclick="exportYear('png')" title="Exportar todos os 12 meses como PNG">Ano (PNG)</button>
+          <button class="btn secondary" onclick="exportYear('pdf')" title="Exportar todos os 12 meses como PDF">Ano (PDF)</button>
           <label>Qualidade
             <select id="exportScaleSelect" onchange="setExportScale(this.value)">
               <option value="1">Rápida (1x)</option>
@@ -526,7 +528,33 @@ __CSS__
   <div id="designHover" class="hidden"></div>
   <div class="dp-tip hidden" id="dpTip">Modo Design ativado — clique em um elemento e arraste ou redimensione.</div>
 
-  <!-- MODAL DE EXPORTAÇÃO -->
+  <!-- MODAL DE BOAS-VINDAS -->
+  <div class="export-overlay" id="welcomeModal">
+    <div class="export-modal" style="max-width:520px;">
+      <div class="export-modal-head">
+        <h2>Calendario Corporativo Progeral</h2>
+      </div>
+      <div class="export-modal-body" style="line-height:1.7;">
+        <p style="font-size:14px;color:var(--navy);font-weight:700;margin-bottom:10px;">Bem-vindo! Veja o que voce pode fazer:</p>
+        <ul style="font-size:13px;color:#444;margin:0 0 14px 18px;padding:0;">
+          <li><strong>Trocar mes/ano</strong> — Use os botoes de seta ou o seletor no cabecalho.</li>
+          <li><strong>Mudar modelo</strong> — Clique em "Modelo" para escolher entre 6 layouts diferentes.</li>
+          <li><strong>Trocar tema/cor</strong> — Use os seletores de tema e cores na barra de ferramentas.</li>
+          <li><strong>Estilos de grade</strong> — Escolha entre Limpo, Dourado, Arredondado, Degradê, etc.</li>
+          <li><strong>Feriados</strong> — Marcadores aparecem automaticamente. Passe o mouse para ver o nome, ou clique no X para remover.</li>
+          <li><strong>Modo Design</strong> — Clique na bolinha dourada para editar cores, tamanhos, bordas e posicoes.</li>
+          <li><strong>Exportar</strong> — Baixe como PNG ou PDF com varios tamanhos de papel.</li>
+          <li><strong>Imprimir</strong> — Use o botao de impressao para imprimir direto.</li>
+        </ul>
+        <p style="font-size:12px;color:#888;margin:0;">Dica: No Modo Design, clique em qualquer elemento e arraste ou redimensione com o mouse.</p>
+      </div>
+      <div class="export-modal-foot">
+        <button class="btn gold" onclick="closeWelcome()" style="width:100%;">Entendi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE EXPORTACAO -->
   <div class="export-overlay hidden" id="exportModal">
     <div class="export-modal">
       <div class="export-modal-head">

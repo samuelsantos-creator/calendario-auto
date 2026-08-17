@@ -288,13 +288,18 @@ function tbodyHTML(weeks, year, m){
         const hs = holidaysFor(key);
         const isHoliday = hs.length > 0;
         const hcls = isHoliday ? ' holiday' : '';
-        const title = isHoliday ? ' title="'+hs.map(h=>h.name).join(', ').replace(/"/g,'')+'"' : '';
         let markersHTML = '';
         if(isHoliday){
-          markersHTML = '<span style="position:absolute;bottom:6px;right:8px;display:flex;gap:3px;align-items:center;">'
-            + hs.map(h => getMarkerImgHTML(h.code)).join('') + '</span>';
+          const names = hs.map(h => h.name).join(', ');
+          markersHTML = '<div class="day-markers"><div class="marker-tooltip">'+names+'</div>'
+            + hs.map(h =>
+              '<span class="marker-wrap" data-hkey="'+key+'" data-hcode="'+h.code+'">'
+              + getMarkerImgHTML(h.code)
+              + '<span class="marker-remove" onclick="removeHolidayMarker(\''+key+'\',\''+h.code+'\')" title="Remover feriado">&times;</span>'
+              + '</span>'
+            ).join('') + '</div>';
         }
-        h += '<td class="day'+wknd+hcls+'" data-date="'+key+'" contenteditable="true"'+title+'>'+d+markersHTML+'</td>';
+        h += '<td class="day'+wknd+hcls+'" data-date="'+key+'" contenteditable="true">'+d+markersHTML+'</td>';
       }
     });
     h += '</tr>';
@@ -413,8 +418,28 @@ function markersForDateMain(year, m, d){
   const key = dateKey(year, m, d);
   const hs = holidaysFor(key);
   if(!hs.length) return '';
-  return '<div class="day-markers">' + hs.map(h => getMarkerImgHTML(h.code)).join('') + '</div>';
+  const names = hs.map(function(h){ return h.name; }).join(', ');
+  return '<div class="day-markers"><div class="marker-tooltip">'+names+'</div>'
+    + hs.map(function(h){
+      return '<span class="marker-wrap" data-hkey="'+key+'" data-hcode="'+h.code+'">'
+        + getMarkerImgHTML(h.code)
+        + '<span class="marker-remove" onclick="removeHolidayMarker(\''+key+'\',\''+h.code+'\')" title="Remover feriado">&times;</span>'
+        + '</span>';
+    }).join('') + '</div>';
 }
+window.removeHolidayMarker = function(key, code){
+  if(!confirm('Remover este feriado?')) return;
+  if(holidaysMap[key]){
+    holidaysMap[key] = holidaysMap[key].filter(function(h){ return h.code !== code; });
+    if(!holidaysMap[key].length) delete holidaysMap[key];
+  }
+  if(code === 'MANUAL' && MANUAL_HOLIDAYS[key]){
+    delete MANUAL_HOLIDAYS[key];
+  }
+  var ym = currentYM();
+  refreshCurrentView(ym.y, ym.m);
+  saveState();
+};
 
 function renderOrigMiniCal(year, m){
   const weeks = buildWeeksMon(year, m);
@@ -539,24 +564,15 @@ function renderYear(year){
 }
 
 function applyScope(){
-  const scope = document.getElementById('exportScope').value;
   const {y, m} = currentYM();
-  if(scope === 'year'){
-    renderYear(y);
-  } else {
-    document.getElementById('yearView').classList.add('hidden');
-    document.getElementById('calendar-capture').classList.remove('hidden');
-    renderTemplate(currentTemplate, y, m);
-  }
+  document.getElementById('yearView').classList.add('hidden');
+  document.getElementById('calendar-capture').classList.remove('hidden');
+  renderTemplate(currentTemplate, y, m);
   saveState();
 }
 
 function refreshCurrentView(y, m){
-  if(document.getElementById('exportScope').value === 'year'){
-    renderYear(y);
-  } else {
-    renderTemplate(currentTemplate, y, m);
-  }
+  renderTemplate(currentTemplate, y, m);
 }
 
 function toggleToolbar(){
@@ -893,21 +909,18 @@ function getSelectedYearMonth(){
 }
 
 function yearCaps(){
-  const scope = document.getElementById('exportScope').value;
   const {y} = getSelectedYearMonth();
-  if(scope !== 'year' || document.getElementById('yearView').classList.contains('hidden')){
-    renderYear(y);
-  }
+  renderYear(y);
   return Array.prototype.slice.call(document.querySelectorAll('#yearView .year-cap'));
 }
 
 async function exportYearPDF(){
   setButtonsDisabled(true);
-  const {y: origY} = getSelectedYearMonth();
+  const {y: origY, m: origM} = getSelectedYearMonth();
   const caps = yearCaps();
   let pdf = null;
   for(let i=0;i<caps.length;i++){
-    setStatus('Gerando PDF do ano: mês '+(i+1)+' de 12...');
+    setStatus('Gerando PDF do ano: mes '+(i+1)+' de 12...');
     await new Promise(r => setTimeout(r, 60));
     const canvas = await captureCanvas(caps[i]);
     const imgData = canvas.toDataURL('image/png');
@@ -919,17 +932,20 @@ async function exportYearPDF(){
     pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
   }
   pdf.save('calendario-progeral-'+origY+'.pdf');
+  document.getElementById('yearView').classList.add('hidden');
+  document.getElementById('calendar-capture').classList.remove('hidden');
+  renderTemplate(currentTemplate, origY, origM);
   setStatus('');
   setButtonsDisabled(false);
 }
 
 async function exportYearZip(){
   setButtonsDisabled(true);
-  const {y: origY} = getSelectedYearMonth();
+  const {y: origY, m: origM} = getSelectedYearMonth();
   const caps = yearCaps();
   const zip = new JSZip();
   for(let i=0;i<caps.length;i++){
-    setStatus('Gerando PNG do ano: mês '+(i+1)+' de 12...');
+    setStatus('Gerando PNG do ano: mes '+(i+1)+' de 12...');
     await new Promise(r => setTimeout(r, 60));
     const canvas = await captureCanvas(caps[i]);
     const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
@@ -941,6 +957,9 @@ async function exportYearZip(){
   const a = document.createElement('a');
   a.href = url; a.download = 'calendario-progeral-'+origY+'.zip'; a.click();
   URL.revokeObjectURL(url);
+  document.getElementById('yearView').classList.add('hidden');
+  document.getElementById('calendar-capture').classList.remove('hidden');
+  renderTemplate(currentTemplate, origY, origM);
   setStatus('');
   setButtonsDisabled(false);
 }
@@ -1032,12 +1051,6 @@ function mmToPixels(mm, dpi){
 
 async function confirmExport(){
   const scope = document.getElementById('exportScope').value;
-  if(scope === 'year'){
-    closeExportModal();
-    if(exportModalType === 'png') await exportYearZip();
-    else await exportYearPDF();
-    return;
-  }
 
   const s = PAPER_SIZES.find(x => x.id === exportSelectedSize);
   if(!s) return;
@@ -1068,6 +1081,13 @@ async function confirmExport(){
   }
 }
 window.confirmExport = confirmExport;
+
+async function exportYear(type){
+  closeExportModal();
+  if(type === 'png') await exportYearZip();
+  else await exportYearPDF();
+}
+window.exportYear = exportYear;
 
 async function exportPNGResized(targetPxW, targetPxH, mmW, mmH){
   setStatus('Gerando PNG ('+mmW+' x '+mmH+'mm)...');
@@ -1227,6 +1247,16 @@ function initApp(){
   const {y, m} = currentYM();
   renderTemplate(currentTemplate, y, m);
   fetchHolidays();
+  try{
+    if(!localStorage.getItem('calendarioProgeralWelcomeSeen')){
+      document.getElementById('welcomeModal').classList.remove('hidden');
+    }
+  }catch(e){}
 }
+function closeWelcome(){
+  document.getElementById('welcomeModal').classList.add('hidden');
+  try{ localStorage.setItem('calendarioProgeralWelcomeSeen', '1'); }catch(e){}
+}
+window.closeWelcome = closeWelcome;
 initApp();
 
