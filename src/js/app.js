@@ -875,23 +875,20 @@ function getSelectedYearMonth(){
   return {y, m: mm-1};
 }
 
-function yearCaps(){
-  const {y} = getSelectedYearMonth();
-  renderYear(y);
-  return Array.prototype.slice.call(document.querySelectorAll('#yearView .year-cap'));
-}
-
 async function exportYearPDF(){
   setButtonsDisabled(true);
   const {y: origY, m: origM} = getSelectedYearMonth();
-  const caps = yearCaps();
+  const cap = document.getElementById('calendar-capture');
+  cap.classList.remove('hidden');
+  document.getElementById('yearView').classList.add('hidden');
   let pdf = null;
-  for(let i=0;i<caps.length;i++){
-    setStatus('Gerando PDF do ano: mes '+(i+1)+' de 12...');
-    await new Promise(r => setTimeout(r, 60));
-    const canvas = await captureCanvas(caps[i]);
+  for(let m=0; m<12; m++){
+    setStatus('Gerando PDF: '+MESES_PT[m]+' '+(m+1)+'/12...');
+    renderTemplate(currentTemplate, origY, m);
+    await new Promise(r => setTimeout(r, 150));
+    const canvas = await captureCanvas(cap);
     const imgData = canvas.toDataURL('image/png');
-    if(i===0){
+    if(m===0){
       pdf = new window.jspdf.jsPDF({orientation:'landscape', unit:'px', format:[canvas.width, canvas.height]});
     } else {
       pdf.addPage([canvas.width, canvas.height], 'landscape');
@@ -899,8 +896,6 @@ async function exportYearPDF(){
     pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
   }
   pdf.save('calendario-progeral-'+origY+'.pdf');
-  document.getElementById('yearView').classList.add('hidden');
-  document.getElementById('calendar-capture').classList.remove('hidden');
   renderTemplate(currentTemplate, origY, origM);
   setStatus('');
   setButtonsDisabled(false);
@@ -909,14 +904,17 @@ async function exportYearPDF(){
 async function exportYearZip(){
   setButtonsDisabled(true);
   const {y: origY, m: origM} = getSelectedYearMonth();
-  const caps = yearCaps();
+  const cap = document.getElementById('calendar-capture');
+  cap.classList.remove('hidden');
+  document.getElementById('yearView').classList.add('hidden');
   const zip = new JSZip();
-  for(let i=0;i<caps.length;i++){
-    setStatus('Gerando PNG do ano: mes '+(i+1)+' de 12...');
-    await new Promise(r => setTimeout(r, 60));
-    const canvas = await captureCanvas(caps[i]);
+  for(let m=0; m<12; m++){
+    setStatus('Gerando PNG: '+MESES_PT[m]+' '+(m+1)+'/12...');
+    renderTemplate(currentTemplate, origY, m);
+    await new Promise(r => setTimeout(r, 150));
+    const canvas = await captureCanvas(cap);
     const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-    zip.file(String(i+1).padStart(2,'0')+'-'+MESES_PT_SLUG[i]+'-'+origY+'.png', blob);
+    zip.file(String(m+1).padStart(2,'0')+'-'+MESES_PT_SLUG[m]+'-'+origY+'.png', blob);
   }
   setStatus('Compactando arquivo .zip...');
   const content = await zip.generateAsync({type:'blob'});
@@ -924,8 +922,6 @@ async function exportYearZip(){
   const a = document.createElement('a');
   a.href = url; a.download = 'calendario-progeral-'+origY+'.zip'; a.click();
   URL.revokeObjectURL(url);
-  document.getElementById('yearView').classList.add('hidden');
-  document.getElementById('calendar-capture').classList.remove('hidden');
   renderTemplate(currentTemplate, origY, origM);
   setStatus('');
   setButtonsDisabled(false);
