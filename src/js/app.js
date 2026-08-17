@@ -865,39 +865,6 @@ function setButtonsDisabled(v){
   document.getElementById('btnPdf').disabled = v;
 }
 
-async function exportPNG(){
-  const scope = document.getElementById('exportScope').value;
-  if(scope === 'month'){
-    setStatus('Gerando PNG...');
-    const canvas = await captureCanvas();
-    const link = document.createElement('a');
-    const {y, m} = currentYM();
-    link.download = 'calendario-'+MESES_PT_SLUG[m]+'-'+y+'.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    setStatus('');
-  } else {
-    await exportYearZip();
-  }
-}
-
-async function exportPDF(){
-  const scope = document.getElementById('exportScope').value;
-  if(scope === 'month'){
-    setStatus('Gerando PDF...');
-    const canvas = await captureCanvas();
-    const imgData = canvas.toDataURL('image/png');
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({orientation: canvas.width > canvas.height ? 'landscape' : 'portrait', unit:'px', format:[canvas.width, canvas.height]});
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-    const {y, m} = currentYM();
-    pdf.save('calendario-'+MESES_PT_SLUG[m]+'-'+y+'.pdf');
-    setStatus('');
-  } else {
-    await exportYearPDF();
-  }
-}
-
 function getSelectedYearMonth(){
   const val = document.getElementById('monthPicker').value;
   if(!val){
@@ -977,12 +944,25 @@ const PAPER_SIZES = [
 let exportModalType = 'png';
 let exportSelectedSize = 'calendario-mesa';
 let exportOrient = 'landscape';
+let exportScope = 'month';
+
+function setExportScope(scope){
+  exportScope = scope;
+  document.getElementById('scopeMonth').classList.toggle('active', scope==='month');
+  document.getElementById('scopeMonth').classList.toggle('secondary', scope!=='month');
+  document.getElementById('scopeYear').classList.toggle('active', scope==='year');
+  document.getElementById('scopeYear').classList.toggle('secondary', scope!=='year');
+  document.getElementById('exportScopeDesc').textContent = scope==='month' ? 'Exporta apenas o mês atual.' : 'Exporta os 12 meses do ano como arquivo único.';
+}
+window.setExportScope = setExportScope;
 
 function openExportModal(type){
   exportModalType = type;
   exportSelectedSize = 'calendario-mesa';
   exportOrient = 'landscape';
-  document.getElementById('exportModalTitle').textContent = type === 'png' ? 'Exportar PNG' : 'Exportar PDF';
+  exportScope = 'month';
+  document.getElementById('exportModalTitle').textContent = 'Exportar ' + type.toUpperCase();
+  setExportScope('month');
   renderExportSizes();
   updateExportPreview();
   document.getElementById('orientLandscape').classList.add('active');
@@ -1050,8 +1030,6 @@ function mmToPixels(mm, dpi){
 }
 
 async function confirmExport(){
-  const scope = document.getElementById('exportScope').value;
-
   const s = PAPER_SIZES.find(x => x.id === exportSelectedSize);
   if(!s) return;
 
@@ -1070,6 +1048,12 @@ async function confirmExport(){
 
   closeExportModal();
 
+  if(exportScope === 'year'){
+    if(exportModalType === 'png') await exportYearZip();
+    else await exportYearPDF();
+    return;
+  }
+
   const dpi = 300;
   const pdfW = mmToPixels(targetW, dpi);
   const pdfH = mmToPixels(targetH, dpi);
@@ -1081,13 +1065,6 @@ async function confirmExport(){
   }
 }
 window.confirmExport = confirmExport;
-
-async function exportYear(type){
-  closeExportModal();
-  if(type === 'png') await exportYearZip();
-  else await exportYearPDF();
-}
-window.exportYear = exportYear;
 
 async function exportPNGResized(targetPxW, targetPxH, mmW, mmH){
   setStatus('Gerando PNG ('+mmW+' x '+mmH+'mm)...');

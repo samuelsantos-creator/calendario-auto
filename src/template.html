@@ -204,7 +204,7 @@ __CSS__
           <button class="btn small secondary" onclick="shiftPicker(1)" title="Próximo mês">▶</button>
           <button class="btn small" onclick="applyMonth()">Aplicar</button>
           <label class="tblk">Escopo de exportação
-            <select id="exportScope" onchange="applyScope()"><option value="month">Mês atual</option></select>
+            <span style="font-size:10px;color:#555;font-weight:600;text-transform:none;letter-spacing:0;">Mês atual</span>
           </label>
         </div>
       </div>
@@ -326,8 +326,6 @@ __CSS__
           <button class="btn" onclick="openExportModal('png')" id="btnPng">Baixar PNG</button>
           <button class="btn secondary" onclick="openExportModal('pdf')" id="btnPdf">Baixar PDF</button>
           <button class="btn secondary gold" onclick="printCalendar()">Imprimir</button>
-          <button class="btn secondary" onclick="exportYear('png')" title="Exportar todos os 12 meses como PNG">Ano (PNG)</button>
-          <button class="btn secondary" onclick="exportYear('pdf')" title="Exportar todos os 12 meses como PDF">Ano (PDF)</button>
           <label>Qualidade
             <select id="exportScaleSelect" onchange="setExportScale(this.value)">
               <option value="1">Rápida (1x)</option>
@@ -521,7 +519,7 @@ __CSS__
 
   <!-- BOLINHA FLUTUANTE (sempre visível; abre o Modo Design e pode ser arrastada) -->
   <button class="dp-ball" id="dpBall" onclick="onBallClick()" title="Abrir Modo Design">
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
   </button>
 
   <div id="designSelection" class="hidden"></div>
@@ -530,23 +528,23 @@ __CSS__
 
   <!-- MODAL DE BOAS-VINDAS -->
   <div class="export-overlay" id="welcomeModal">
-    <div class="export-modal" style="max-width:520px;">
+    <div class="export-modal" style="max-width:440px;">
       <div class="export-modal-head">
         <h2>Calendario Corporativo Progeral</h2>
       </div>
-      <div class="export-modal-body" style="line-height:1.7;">
-        <p style="font-size:14px;color:var(--navy);font-weight:700;margin-bottom:10px;">Bem-vindo! Veja o que voce pode fazer:</p>
-        <ul style="font-size:13px;color:#444;margin:0 0 14px 18px;padding:0;">
+      <div class="export-modal-body" style="line-height:1.6;">
+        <p style="font-size:12px;color:var(--navy);font-weight:700;margin-bottom:8px;">Bem-vindo! Veja o que voce pode fazer:</p>
+        <ul style="font-size:11px;color:#444;margin:0 0 10px 16px;padding:0;">
           <li><strong>Trocar mes/ano</strong> — Use os botoes de seta ou o seletor no cabecalho.</li>
           <li><strong>Mudar modelo</strong> — Clique em "Modelo" para escolher entre 6 layouts diferentes.</li>
           <li><strong>Trocar tema/cor</strong> — Use os seletores de tema e cores na barra de ferramentas.</li>
           <li><strong>Estilos de grade</strong> — Escolha entre Limpo, Dourado, Arredondado, Degradê, etc.</li>
           <li><strong>Feriados</strong> — Marcadores aparecem automaticamente. Passe o mouse para ver o nome, ou clique no X para remover.</li>
           <li><strong>Modo Design</strong> — Clique na bolinha dourada para editar cores, tamanhos, bordas e posicoes.</li>
-          <li><strong>Exportar</strong> — Baixe como PNG ou PDF com varios tamanhos de papel.</li>
+          <li><strong>Exportar</strong> — Baixe como PNG ou PDF, mes ou ano, com varios tamanhos de papel.</li>
           <li><strong>Imprimir</strong> — Use o botao de impressao para imprimir direto.</li>
         </ul>
-        <p style="font-size:12px;color:#888;margin:0;">Dica: No Modo Design, clique em qualquer elemento e arraste ou redimensione com o mouse.</p>
+        <p style="font-size:10px;color:#888;margin:0;">Dica: No Modo Design, clique em qualquer elemento e arraste ou redimensione com o mouse.</p>
       </div>
       <div class="export-modal-foot">
         <button class="btn gold" onclick="closeWelcome()" style="width:100%;">Entendi</button>
@@ -558,14 +556,19 @@ __CSS__
   <div class="export-overlay hidden" id="exportModal">
     <div class="export-modal">
       <div class="export-modal-head">
-        <h2 id="exportModalTitle">Exportar PNG</h2>
+        <h2 id="exportModalTitle">Exportar</h2>
         <button class="btn-close-export" onclick="closeExportModal()">×</button>
       </div>
       <div class="export-modal-body">
-        <p class="export-desc">Escolha o tamanho do papel para a exportação:</p>
+        <div class="export-scope-toggle" id="exportScopeToggle">
+          <label style="font-size:11px;color:#555;font-weight:600;">Escopo:</label>
+          <button class="btn small active" id="scopeMonth" onclick="setExportScope('month')">Mês atual</button>
+          <button class="btn small secondary" id="scopeYear" onclick="setExportScope('year')">Ano completo</button>
+        </div>
+        <p class="export-desc" id="exportScopeDesc">Exporta apenas o mês atual.</p>
         <div class="export-sizes" id="exportSizes"></div>
         <div class="export-preview">
-          <div class="export-preview-label">Pré-visualização do tamanho:</div>
+          <div class="export-preview-label">Pré-visualização:</div>
           <div class="export-preview-box" id="exportPreviewBox">
             <div class="export-preview-page" id="exportPreviewPage"></div>
           </div>
