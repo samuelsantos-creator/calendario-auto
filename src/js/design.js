@@ -768,6 +768,17 @@
   window.dpResetAll = dpResetAll;
 
   /* ---------------- presets / modelos salvos ---------------- */
+  const API_BASE = (location.origin.includes('localhost') || location.protocol === 'file:')
+    ? 'http://localhost:8080' : '';
+
+  function apiFetch(path, opts){
+    const url = API_BASE + path;
+    return fetch(url, opts).then(function(r){
+      if(!r.ok) throw new Error('Erro na API: '+r.status);
+      return r.json();
+    });
+  }
+
   function collectCurrentState(){
     const ym = currentYM();
     return {
@@ -787,27 +798,39 @@
     };
   }
 
+  /* -------- salvar preset no SERVIDOR -------- */
   function dpSavePreset(){
-    const name = elv('dpPresetName').value.trim();
+    var name = elv('dpPresetName').value.trim();
     if(!name){ elv('dpPresetName').focus(); return; }
-    designPresets[name] = collectCurrentState();
+    var snap = collectCurrentState();
+    var payload = { name: name, template: currentTemplate || '', data: snap };
+    designPresets[name] = snap;
     saveDesignPresets();
     renderPresetList();
     elv('dpPresetName').value = '';
+    if(API_BASE){
+      apiFetch('/api/presets', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      }).then(function(){ renderPresetList(); }).catch(function(e){
+        console.warn('API offline, salvo apenas localmente:', e.message);
+      });
+    }
   }
   window.dpSavePreset = dpSavePreset;
 
   function dpApplyPreset(name){
-    const snap = designPresets[name];
+    var snap = designPresets[name];
     if(!snap) return;
     applySnapshot(snap);
   }
   window.dpApplyPreset = dpApplyPreset;
 
   function dpCopyPreset(name){
-    const snap = designPresets[name];
+    var snap = designPresets[name];
     if(!snap) return;
-    const copyName = name + ' (cópia)';
+    var copyName = name + ' (cópia)';
     designPresets[copyName] = JSON.parse(JSON.stringify(snap));
     designPresets[copyName].savedAt = Date.now();
     saveDesignPresets();
@@ -815,33 +838,72 @@
   }
   window.dpCopyPreset = dpCopyPreset;
 
-  function dpDeletePreset(name){
+  function dpDeletePreset(name, serverId){
     if(!confirm('Excluir o modelo "'+name+'"?')) return;
     delete designPresets[name];
     saveDesignPresets();
     renderPresetList();
+    if(API_BASE && serverId){
+      apiFetch('/api/presets/'+serverId, { method:'DELETE' })
+        .then(function(){ loadServerPresets(); })
+        .catch(function(){});
+    }
   }
   window.dpDeletePreset = dpDeletePreset;
 
-  /* -------- salvar como padrão do template -------- */
-  const DEFAULT_KEY = 'cal_default_by_template';
-  function getDefaultsMap(){
-    try { return JSON.parse(localStorage.getItem(DEFAULT_KEY) || '{}'); } catch(e){ return {}; }
+  /* -------- carregar presets do SERVIDOR -------- */
+  function loadServerPresets(){
+    if(!API_BASE){
+      renderPresetList();
+      return;
+    }
+    apiFetch('/api/presets').then(function(rows){
+      rows.forEach(function(row){
+        if(row.data && !designPresets[row.name]){
+          designPresets[row.name] = row.data;
+        }
+        if(row.data) designPresets[row.name]._serverId = row.id;
+        if(row.data) designPresets[row.name]._isDefault = row.is_default;
+      });
+      saveDesignPresets();
+      renderPresetList();
+    }).catch(function(e){
+      console.warn('API offline:', e.message);
+      renderPresetList();
+    });
   }
+
+  /* -------- salvar como padrão no SERVIDOR -------- */
   function dpSaveAsDefault(){
-    const snap = collectCurrentState();
-    const tpl = currentTemplate || 'classic';
-    const map = getDefaultsMap();
-    map[tpl] = snap;
-    localStorage.setItem(DEFAULT_KEY, JSON.stringify(map));
-    updateDefaultLabel();
-    alert('Design salvo como padrão para o template "'+templateDisplayName(tpl)+'"!');
+    var snap = collectCurrentState();
+    var tpl = currentTemplate || 'classic';
+    var name = 'PADRÃO — ' + templateDisplayName(tpl);
+    var payload = { name: name, template: tpl, data: snap, is_default: true };
+    if(API_BASE){
+      apiFetch('/api/presets', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      }).then(function(){
+        updateDefaultLabel();
+        loadServerPresets();
+        alert('Design salvo como padrão para "'+templateDisplayName(tpl)+'"! Todos os usuários verão este modelo.');
+      }).catch(function(e){
+        alert('Erro ao salvar no servidor: '+e.message);
+      });
+    } else {
+      var map = getDefaultsMap();
+      map[tpl] = snap;
+      localStorage.setItem(DEFAULT_KEY, JSON.stringify(map));
+      updateDefaultLabel();
+      alert('Design salvo localmente (servidor offline).');
+    }
   }
   window.dpSaveAsDefault = dpSaveAsDefault;
 
   function dpClearDefault(){
-    const tpl = currentTemplate || 'classic';
-    const map = getDefaultsMap();
+    var tpl = currentTemplate || 'classic';
+    var map = getDefaultsMap();
     delete map[tpl];
     localStorage.setItem(DEFAULT_KEY, JSON.stringify(map));
     updateDefaultLabel();
@@ -850,63 +912,64 @@
   window.dpClearDefault = dpClearDefault;
 
   function applyDefaultForTemplate(tpl){
-    const map = getDefaultsMap();
-    const snap = map[tpl];
+    var map = getDefaultsMap();
+    var snap = map[tpl];
     if(snap) applySnapshot(snap);
   }
   window.applyDefaultForTemplate = applyDefaultForTemplate;
 
   function templateDisplayName(tpl){
-    const map = { classic:'Clássico Executivo', compact:'Mesa Corporativa', quarterly:'Trimestral', desk:'Painel Único', minimal:'Minimalista', original:'Original Progeral' };
+    var map = { classic:'Clássico Executivo', compact:'Mesa Corporativa', quarterly:'Trimestral', desk:'Painel Único', minimal:'Minimalista', original:'Original Progeral' };
     return map[tpl] || tpl;
   }
 
   function updateDefaultLabel(){
-    const el = elv('dpCurrentTemplateName');
+    var el = elv('dpCurrentTemplateName');
     if(!el) return;
-    const tpl = currentTemplate || 'classic';
-    const map = getDefaultsMap();
-    const has = !!map[tpl];
-    el.textContent = templateDisplayName(tpl) + (has ? ' (padrão salvo ✓)' : '');
+    var tpl = currentTemplate || 'classic';
+    var map = getDefaultsMap();
+    var has = !!map[tpl];
+    el.textContent = templateDisplayName(tpl) + (has ? ' (padrão local ✓)' : '');
   }
   window.updateDefaultLabel = updateDefaultLabel;
 
   function renderPresetList(){
-    const box = elv('dpPresetList');
-    const names = Object.keys(designPresets);
+    var box = elv('dpPresetList');
+    var names = Object.keys(designPresets);
     if(!names.length){
-      box.innerHTML = '<p class="thint" style="color:#8a8f9c;font-size:12px;margin:4px 0;">Nenhum modelo salvo ainda.</p>';
+      box.innerHTML = '<p class="thint" style="color:#8a8f9c;font-size:12px;margin:4px 0;">Nenhum modelo salvo ainda. Configure e clique em Salvar.</p>';
       return;
     }
     box.innerHTML = '';
-    names.forEach(name => {
-      const item = document.createElement('div');
+    names.forEach(function(name){
+      var item = document.createElement('div');
       item.className = 'dp-preset-item';
       item.style.cssText = 'flex-wrap:wrap;';
-      const label = document.createElement('div');
+      var label = document.createElement('div');
       label.className = 'name';
       label.textContent = name;
-      const n = Object.keys(designPresets[name].elements || {}).length;
-      const sub = document.createElement('div');
+      var n = Object.keys((designPresets[name]||{}).elements || {}).length;
+      var sub = document.createElement('div');
       sub.style.cssText = 'font-size:10px;color:#8a8f9c;font-weight:400;width:100%;';
-      sub.textContent = n > 0 ? n+' elementos personalizados' : 'sem personalização';
+      var badge = designPresets[name]._isDefault ? ' ⭐ padrão' : '';
+      sub.textContent = (n > 0 ? n+' elementos personalizados' : 'sem personalização') + badge;
       label.appendChild(sub);
-      const btns = document.createElement('div');
+      var btns = document.createElement('div');
       btns.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;';
-      const b1 = document.createElement('button');
+      var b1 = document.createElement('button');
       b1.className = 'btn small gold';
       b1.textContent = 'Aplicar';
-      b1.onclick = () => dpApplyPreset(name);
-      const bCopy = document.createElement('button');
+      b1.onclick = (function(n){ return function(){ dpApplyPreset(n); }; })(name);
+      var bCopy = document.createElement('button');
       bCopy.className = 'btn small secondary';
       bCopy.textContent = 'Copiar';
       bCopy.title = 'Cria uma cópia deste modelo';
-      bCopy.onclick = () => dpCopyPreset(name);
-      const b2 = document.createElement('button');
+      bCopy.onclick = (function(n){ return function(){ dpCopyPreset(n); }; })(name);
+      var b2 = document.createElement('button');
       b2.className = 'btn small secondary';
       b2.style.color = '#e74c3c';
       b2.textContent = 'Excluir';
-      b2.onclick = () => dpDeletePreset(name);
+      b2.onclick = (function(n, sid){ return function(){ dpDeletePreset(n, sid); }; })(name, designPresets[name]._serverId);
       btns.appendChild(b1);
       btns.appendChild(bCopy);
       btns.appendChild(b2);
@@ -992,11 +1055,11 @@
   /* ---------------- inicialização ---------------- */
   function initDesign(){
     document.getElementById('dpImportFile').addEventListener('change', function(){ dpImportFile(this); });
-    renderPresetList();
     syncGeneralPanel();
     applyDesignOverrides();
     setupBall();
     updateDefaultLabel();
+    loadServerPresets();
   }
 
   if(document.readyState === 'loading'){
