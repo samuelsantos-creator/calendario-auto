@@ -1,0 +1,17 @@
+# Build artifacts
+assets_b64.json
+calendario_v3_template.html
+
+# Python
+__pycache__/
+*.pyc
+
+# Local tools
+.opencode/
+
+# Backup
+backup-*/
+
+# Misc
+modelo-original - Copia.jpg
+Planta-china.jpg
