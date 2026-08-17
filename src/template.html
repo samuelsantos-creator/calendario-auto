@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendário Corporativo — Progeral Global</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&family=Outfit:wght@400;600;700;800&family=Montserrat:wght@400;600;700;800&family=Roboto:wght@400;500;700&family=Playfair+Display:ital,wght@0,600;0,800;1,600&display=swap" rel="stylesheet">
+<script>/* html2canvas 1.4.1 (embutido localmente) */
+__LIB_HTML2CANVAS__</script>
+<script>/* jsPDF 2.5.1 (embutido localmente) */
+__LIB_JSPDF__</script>
+<script>/* JSZip 3.10.1 (embutido localmente) */
+__LIB_JSZIP__</script>
+<style>
+__CSS__
+</style>
+</head>
+<body>
+
+  <div class="modal-overlay" id="templateModal">
+    <div class="modal">
+      <div class="eyebrow">Progeral Global · Coleção 2026</div>
+      <h2>Escolha o modelo do seu calendário</h2>
+      <p>Layouts pensados para calendários de mesa e impressos corporativos. Escolha o modelo e edite tudo facilmente.</p>
+      <div class="template-grid">
+
+        <div class="template-card featured">
+          <div class="thumb">
+            <div class="mid" style="flex-direction:row; gap:3px;">
+              <div class="block" style="flex:.85; background:var(--navy); border-radius:6px 0 6px 0;"></div>
+              <div class="block" style="flex:1.3; background:#cfd6e4; border-radius:4px; position:relative;">
+                <div class="sub" style="position:absolute; right:2px; top:2px; width:46%; height:70%; background:#fff; border:1px solid var(--navy); border-radius:5px;"></div>
+              </div>
+            </div>
+            <div class="mid"><div class="block"><div class="sub"></div></div></div>
+          </div>
+          <h3>Original Progeral <span class="badge-new">Exclusivo</span></h3>
+          <p>Réplica exata da identidade Progeral: foto da planta, mini-calendário do próximo mês, data em destaque e bandeiras/marcadores institucionais.</p>
+          <button onclick="chooseTemplate('original')">Usar este modelo</button>
+        </div>
+
+        <div class="template-card">
+          <div class="thumb">
+            <div class="dots"><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="mid" style="flex-direction:row;">
+              <div class="block" style="flex:.9; background:var(--navy); border-radius:6px; padding:6px; justify-content:center;">
+                <div class="hero-num" style="color:#fff; font-size:30px;">14</div>
+              </div>
+              <div class="block"><div class="sub"></div></div>
+            </div>
+          </div>
+          <h3>Mesa Corporativa <span class="badge-new">Novo</span></h3>
+          <p>Estilo calendário de mesa: painel lateral com o dia em destaque + grade do mês.</p>
+          <button onclick="chooseTemplate('desk')">Usar este modelo</button>
+        </div>
+
+        <div class="template-card">
+          <div class="thumb">
+            <div class="band"></div>
+            <div class="mid">
+              <div class="block" style="flex:1.5"><div class="sub"></div></div>
+              <div class="block"><div class="sub"></div><div class="sub gold" style="flex:.4"></div><div class="sub" style="flex:.4"></div></div>
+            </div>
+            <div class="band foot"></div>
+          </div>
+          <h3>Clássico Executivo</h3>
+          <p>Mês atual em destaque + mês anterior como referência, com painéis de feriados e anotações.</p>
+          <button onclick="chooseTemplate('classic')">Usar este modelo</button>
+        </div>
+
+        <div class="template-card">
+          <div class="thumb">
+            <div class="band"></div>
+            <div class="mid"><div class="block"><div class="sub gold"></div></div></div>
+            <div class="band foot"></div>
+          </div>
+          <h3>Painel Único</h3>
+          <p>Apenas o calendário do mês, maior e centralizado — visual limpo, tipografia grande.</p>
+          <button onclick="chooseTemplate('compact')">Usar este modelo</button>
+        </div>
+
+        <div class="template-card">
+          <div class="thumb">
+            <div class="band"></div>
+            <div class="mid">
+              <div class="block"><div class="sub"></div></div>
+              <div class="block"><div class="sub gold"></div></div>
+              <div class="block"><div class="sub"></div></div>
+            </div>
+            <div class="band foot"></div>
+          </div>
+          <h3>Trimestral / Planejamento</h3>
+          <p>Três calendários lado a lado: mês anterior, atual e próximo. Ideal para planejamento executivo.</p>
+          <button onclick="chooseTemplate('quarterly')">Usar este modelo</button>
+        </div>
+
+        <div class="template-card">
+          <div class="thumb round">
+            <div class="band"></div>
+            <div class="mid">
+              <div class="block" style="flex:1.5"><div class="sub"></div></div>
+              <div class="block"><div class="sub"></div><div class="sub gold" style="flex:.4"></div><div class="sub" style="flex:.4"></div></div>
+            </div>
+            <div class="band foot"></div>
+          </div>
+          <h3>Minimalista Premium</h3>
+          <p>Mesma estrutura do Clássico, com bordas arredondadas e grades leves.</p>
+          <button onclick="chooseTemplate('minimal')">Usar este modelo</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar-head">
+      <div>
+        <h1>Editor de Calendário</h1>
+        <span class="tb-sub">Progeral Global · Coleção 2026</span>
+      </div>
+      <button class="btn brush-btn" id="designToggleBtn" onclick="toggleDesignMode()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+        Modo Design
+      </button>
+      <button class="btn secondary small" onclick="openModal()">⇄ Trocar modelo</button>
+      <button class="btn secondary small" onclick="resetAllSettings()" title="Apagar todas as configurações salvas">↺ Resetar tudo</button>
+      <button class="btn secondary small tb-collapse" id="tbToggle" onclick="toggleToolbar()" title="Recolher editor">⌄</button>
+    </div>
+
+    <div class="toolbar-cards" id="tbCards">
+
+      <div class="tcard">
+        <h2>Mês / Período</h2>
+        <div class="trow">
+          <label>Mês/ano <input type="month" id="monthPicker" onchange="applyMonth()"></label>
+          <button class="btn small secondary" onclick="shiftPicker(-1)" title="Mês anterior">◀</button>
+          <button class="btn small secondary" onclick="shiftPicker(1)" title="Próximo mês">▶</button>
+          <button class="btn small" onclick="applyMonth()">Aplicar</button>
+          <label class="tblk">Escopo de exportação
+            <select id="exportScope" onchange="applyScope()"><option value="month">Mês atual</option><option value="year">Ano completo (12 meses)</option></select>
+          </label>
+        </div>
+      </div>
+
+      <div class="tcard">
+        <h2>Identidade Visual</h2>
+        <div class="trow">
+          <label>Banner da planta
+            <select id="plantBannerSelect" onchange="changePlantBanner(this.value)">
+              <option value="b1">Opção 1 — Fachada Principal</option>
+              <option value="b2">Opção 2 — Entrada & Prédio</option>
+              <option value="b3">Opção 3 — Visão Panorâmica</option>
+            </select>
+          </label>
+          <label>Fonte
+            <select id="fontSelect" onchange="changeFontFamily(this.value)">
+              <option value="default">Fraunces + Inter (Corporativo)</option>
+              <option value="outfit">Outfit (Moderno & Elegante)</option>
+              <option value="montserrat">Montserrat (Geométrico)</option>
+              <option value="roboto">Roboto (Clean)</option>
+              <option value="playfair">Playfair Display (Editorial)</option>
+              <option value="mono">IBM Plex Mono (Industrial)</option>
+            </select>
+          </label>
+          <label>Slogan
+            <select id="sloganSelect" onchange="applySloganPreset(this.value)">
+              <option value="Precisão que conecta.<br>Qualidade que move.">Precisão que conecta. Qualidade que move.</option>
+              <option value="Qualidade e inovação<br>em sistemas de fixação.">Qualidade e inovação em fixação.</option>
+              <option value="Engenharia de precisão<br>para soluções globais.">Engenharia de precisão para soluções globais.</option>
+              <option value="Progeral — Conectando<br>tecnologia e excelência.">Progeral — Tecnologia e excelência.</option>
+            </select>
+          </label>
+          <label>Ícone
+            <select id="iconSelect" onchange="changeFooterIcon(this.value)">
+              <option value="target">Mira / Alvo</option>
+              <option value="star">Estrela</option>
+              <option value="none">Sem ícone</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="tcard">
+        <h2>Tema & Cores</h2>
+        <div class="trow">
+          <label>Tema
+            <select id="themeSelect" onchange="changeTheme(this.value)">
+              <option value="navy">Progeral Navy (Padrão)</option>
+              <option value="safira">Azul Safira & Prata</option>
+              <option value="grafite">Grafite Industrial</option>
+              <option value="esmeralda">Verde Esmeralda</option>
+              <option value="bordo">Bordô Executive</option>
+            </select>
+          </label>
+          <label>Principal <input type="color" id="primaryColorPicker" value="#071938" onchange="updateCustomColors()"></label>
+          <label>Secundária <input type="color" id="secondaryColorPicker" value="#0B1F3F" onchange="updateCustomColors()"></label>
+          <label>Fim de semana <input type="color" id="weekendColorPicker" value="#F4F6FB" onchange="updateCustomColors()"></label>
+          <label>Estilo da grade (coluna de semana + cabeçalho)
+            <select id="gridStyleSelect" onchange="changeGridStyle(this.value)">
+              <option value="solid">Padrão Navy (sólido)</option>
+              <option value="rounded">Arredondado (pill)</option>
+              <option value="none">Limpo — sem fundo</option>
+              <option value="gold">Dourado</option>
+              <option value="dark">Preto profundo</option>
+              <option value="gradient">Degradê navy</option>
+              <option value="soft">Suave cinza</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="tcard">
+        <h2>Imagens</h2>
+        <div class="trow">
+          <label class="file-btn">Trocar topo<input type="file" accept="image/*" id="topUpload" hidden></label>
+          <label class="file-btn">Trocar rodapé<input type="file" accept="image/*" id="bottomUpload" hidden></label>
+          <label class="file-btn">Trocar foto da planta<input type="file" accept="image/*" id="plantUpload" hidden></label>
+          <button class="btn small secondary" onclick="resetImages()">Padrão Progeral</button>
+        </div>
+        <p class="thint">Banners de topo/rodapé aparecem nos modelos Clássico, Painel Único, Trimestral e Mesa. A foto da planta é usada no modelo Original Progeral.</p>
+      </div>
+
+      <div class="tcard">
+        <h2>Países & Feriados</h2>
+        <div class="trow">
+          <div id="countryChips"></div>
+          <select id="countryAdd" onchange="addCountryChip(this.value); this.value='';">
+            <option value="">+ adicionar país</option>
+            <option value="BR">🇧🇷 Brasil</option>
+            <option value="MX">🇲🇽 México</option>
+            <option value="CN">🇨🇳 China</option>
+            <option value="US">🇺🇸 Estados Unidos</option>
+            <option value="PT">🇵🇹 Portugal</option>
+            <option value="AR">🇦🇷 Argentina</option>
+            <option value="GB">🇬🇧 Reino Unido</option>
+            <option value="DE">🇩🇪 Alemanha</option>
+            <option value="FR">🇫🇷 França</option>
+            <option value="ES">🇪🇸 Espanha</option>
+            <option value="IT">🇮🇹 Itália</option>
+            <option value="CA">🇨🇦 Canadá</option>
+            <option value="JP">🇯🇵 Japão</option>
+            <option value="NL">🇳🇱 Países Baixos</option>
+            <option value="AU">🇦🇺 Austrália</option>
+          </select>
+          <button class="btn small gold" onclick="fetchHolidays()">Buscar feriados</button>
+        </div>
+      </div>
+
+      <div class="tcard">
+        <h2>Data em destaque</h2>
+        <div class="trow">
+          <label class="chk"><input type="checkbox" id="outlineToggle" onchange="setDateOutline(this.checked)"> Contorno (outline) na data</label>
+        </div>
+      </div>
+
+      <div class="tcard">
+        <h2>Exportar</h2>
+        <div class="trow">
+          <button class="btn" onclick="exportPNG()" id="btnPng">Baixar PNG</button>
+          <button class="btn secondary" onclick="exportPDF()" id="btnPdf">Baixar PDF</button>
+          <button class="btn secondary" onclick="printCalendar()">Imprimir</button>
+          <label>Qualidade
+            <select id="exportScaleSelect" onchange="setExportScale(this.value)">
+              <option value="1">Rápida (1x)</option>
+              <option value="2">Média (2x)</option>
+              <option value="3" selected>Alta (3x) — recomendado</option>
+              <option value="4">Máxima (4x)</option>
+            </select>
+          </label>
+          <span id="exportStatus"></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="calendar-capture" data-template="original">
+    <img class="banner-img" id="topBanner" src="" alt="Topo" style="display:none;">
+    <div id="calendarBody"></div>
+    <img class="banner-img bottom" id="bottomBanner" src="" alt="Rodapé" style="display:none;">
+  </div>
+
+  <!-- VISÃO ANUAL (12 meses editáveis) -->
+  <div id="yearView" class="hidden">
+    <div class="year-blocks" id="yearBlocks"></div>
+  </div>
+
+  <!-- MODO DESIGN (PAINEL DO PINCEL) -->
+  <div class="design-overlay hidden" id="designOverlay">
+    <aside class="design-panel" id="designPanel">
+      <div class="dp-head">
+        <div>
+          <h2>Modo Design</h2>
+          <span class="dp-sub">Selecione um elemento para editar</span>
+        </div>
+        <div class="dp-head-btns">
+          <button class="dp-min" id="dpMinBtn" onclick="toggleDesignPanel()" title="Minimizar painel">—</button>
+          <button class="dp-close" onclick="toggleDesignMode()" title="Fechar (Esc)">×</button>
+        </div>
+      </div>
+
+      <div class="dp-tabs">
+        <button class="dp-tab active" data-tab="elemento" onclick="setDesignTab('elemento')">Elemento</button>
+        <button class="dp-tab" data-tab="geral" onclick="setDesignTab('geral')">Layout</button>
+        <button class="dp-tab" data-tab="presets" onclick="setDesignTab('presets')">Modelos</button>
+      </div>
+
+      <div class="dp-body">
+        <div class="dp-page" id="dpPage-elemento">
+          <div class="dp-empty" id="dpEmpty">Clique em um elemento do calendário para editá-lo.<br><br>Dica: no modo design você pode <b>arrastar</b> e <b>redimensionar</b> qualquer parte do calendário.</div>
+
+          <div class="dp-fields" id="dpFields" style="display:none;">
+            <div class="dp-selected-name" id="dpSelName">Elemento</div>
+            <div class="dp-breadcrumb" id="dpBreadcrumb"></div>
+            <div class="dp-row-btns">
+              <button class="btn small secondary" onclick="dpSelectParent()">↑ Pai</button>
+              <button class="btn small secondary" onclick="dpSelectTable()">Tabela do mês</button>
+            </div>
+
+            <div class="dp-group">
+              <h3>Posição</h3>
+              <label>X <input type="range" id="dpX" min="-600" max="600" step="1" oninput="dpPos('x', this.value)"><span class="dp-val" id="dpXv">0</span></label>
+              <label>Y <input type="range" id="dpY" min="-600" max="600" step="1" oninput="dpPos('y', this.value)"><span class="dp-val" id="dpYv">0</span></label>
+              <div class="dp-row-btns">
+                <button class="btn small secondary" onclick="dpAlign('left')">⇤ Esq</button>
+                <button class="btn small secondary" onclick="dpAlign('center')">Centro</button>
+                <button class="btn small secondary" onclick="dpAlign('right')">Dir ⇥</button>
+              </div>
+            </div>
+
+            <div class="dp-group">
+              <h3>Tamanho</h3>
+              <label>Largura <input type="range" id="dpW" min="20" max="1600" step="2" oninput="dpSize('width', this.value)"><span class="dp-val" id="dpWv"></span></label>
+              <label>Altura <input type="range" id="dpH" min="20" max="900" step="2" oninput="dpSize('height', this.value)"><span class="dp-val" id="dpHv"></span></label>
+              <label><input type="checkbox" id="dpKeepRatio" checked> Manter proporção</label>
+            </div>
+
+            <div class="dp-group">
+              <h3>Borda</h3>
+              <div class="dp-side-toggles" id="dpSides">
+                <label><input type="checkbox" data-side="top" checked> Topo</label>
+                <label><input type="checkbox" data-side="right" checked> Direita</label>
+                <label><input type="checkbox" data-side="bottom" checked> Base</label>
+                <label><input type="checkbox" data-side="left" checked> Esquerda</label>
+              </div>
+              <label>Estilo
+                <select id="dpBorderStyle" onchange="dpBorderStyle(this.value)">
+                  <option value="solid">Sólida</option>
+                  <option value="dashed">Tracejada</option>
+                  <option value="dotted">Pontilhada</option>
+                  <option value="double">Dupla</option>
+                  <option value="none">Sem borda</option>
+                </select>
+              </label>
+              <label>Espessura <input type="range" id="dpBorderW" min="0" max="12" step="1" oninput="dpBorderW(this.value)"><span class="dp-val" id="dpBorderWv">0</span></label>
+              <label>Cor <input type="color" id="dpBorderColor" value="#0B1F3F" onchange="dpBorderColor(this.value)"></label>
+              <label>Arredondar <input type="range" id="dpRadius" min="0" max="60" step="1" oninput="dpRadius(this.value)"><span class="dp-val" id="dpRadiusv">0</span></label>
+            </div>
+
+            <div class="dp-group">
+              <h3>Aparência</h3>
+              <label>Fundo <input type="color" id="dpBg" value="#ffffff" onchange="dpBg(this.value)"></label>
+              <label><input type="checkbox" id="dpBgOn" onchange="dpBgToggle(this.checked)"> Usar cor de fundo</label>
+              <label>Cor do texto <input type="color" id="dpTextColor" value="#171B24" onchange="dpTextColor(this.value)"></label>
+              <label>Tamanho do texto <input type="range" id="dpFontSize" min="8" max="200" step="1" oninput="dpFontSize(this.value)"><span class="dp-val" id="dpFontSizev"></span></label>
+              <label>Peso
+                <select id="dpFontWeight" onchange="dpFontWeight(this.value)">
+                  <option value="">Normal</option><option value="600">Semibold</option>
+                  <option value="700">Bold</option><option value="800">Extra Bold</option><option value="900">Black</option>
+                </select>
+              </label>
+              <label>Girar <input type="range" id="dpRotate" min="-180" max="180" step="1" oninput="dpRotate(this.value)"><span class="dp-val" id="dpRotatev">0</span></label>
+              <label>Sombra <input type="range" id="dpShadow" min="0" max="40" step="1" oninput="dpShadow(this.value)"><span class="dp-val" id="dpShadowv">0</span></label>
+            </div>
+
+            <div class="dp-group">
+              <h3>Camadas</h3>
+              <div class="dp-row-btns">
+                <button class="btn small secondary" onclick="dpLayer(-1)">⬇ Para trás</button>
+                <button class="btn small secondary" onclick="dpLayer(1)">⬆ Para frente</button>
+              </div>
+            </div>
+
+            <div class="dp-group">
+              <h3>Ações</h3>
+              <div class="dp-row-btns">
+                <button class="btn small secondary" onclick="dpBorderQuick('solid')">+ Borda</button>
+                <button class="btn small secondary" onclick="dpBorderQuick('none')">− Borda</button>
+                <button class="btn small gold" onclick="dpResetElement()">Restaurar elemento</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dp-page hidden" id="dpPage-geral">
+          <div class="dp-group">
+            <h3>Calendário</h3>
+            <label>Largura total <input type="range" id="dpCanvasW" min="700" max="1700" step="10" oninput="dpCanvasW(this.value)"><span class="dp-val" id="dpCanvasWv"></span></label>
+            <label><input type="checkbox" id="dpCanvasAuto" onchange="dpCanvasAuto(this.checked)"> Largura automática (ocupar tela)</label>
+            <div class="dp-row-btns">
+              <button class="btn small secondary" onclick="dpCanvasAlign('left')">⇤ Esquerda</button>
+              <button class="btn small secondary" onclick="dpCanvasAlign('center')">Centro</button>
+              <button class="btn small secondary" onclick="dpCanvasAlign('right')">Direita ⇥</button>
+            </div>
+          </div>
+          <div class="dp-group">
+            <h3>Espaçamentos</h3>
+            <label>Entre colunas <input type="range" id="dpGap" min="0" max="80" step="2" oninput="dpGap(this.value)"><span class="dp-val" id="dpGapv"></span></label>
+            <label>Preenchimento interno <input type="range" id="dpPad" min="0" max="80" step="2" oninput="dpPad(this.value)"><span class="dp-val" id="dpPadv"></span></label>
+          </div>
+          <div class="dp-group">
+            <h3>Zoom da prévia</h3>
+            <label><input type="range" id="dpZoom" min="40" max="150" step="5" value="100" oninput="dpZoomSet(this.value)"><span class="dp-val" id="dpZoomv">100%</span></label>
+            <p class="thint">O zoom afeta apenas a visualização — os arquivos exportados mantêm a qualidade original.</p>
+          </div>
+          <div class="dp-group">
+            <h3>Ações</h3>
+            <button class="btn small gold" onclick="dpResetAll()">Redefinir design</button>
+          </div>
+        </div>
+
+        <div class="dp-page hidden" id="dpPage-presets">
+          <div class="dp-group">
+            <h3>Salvar modelo atual</h3>
+            <div class="dp-row-btns">
+              <input type="text" id="dpPresetName" placeholder="Nome do modelo" class="dp-text">
+              <button class="btn small gold" onclick="dpSavePreset()">Salvar</button>
+            </div>
+          </div>
+          <div class="dp-group">
+            <h3>Modelos salvos</h3>
+            <div id="dpPresetList" class="dp-preset-list"></div>
+          </div>
+          <div class="dp-group">
+            <h3>Arquivo de design</h3>
+            <div class="dp-row-btns">
+              <label class="file-btn">Importar JSON<input type="file" accept="application/json" id="dpImportFile" hidden></label>
+              <button class="btn small" onclick="dpExportJson()">Exportar JSON</button>
+            </div>
+            <p class="thint">O JSON contém todo o design (bordas, tamanhos, posições, tema) e pode ser compartilhado entre computadores.</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- BOLINHA FLUTUANTE (sempre visível; abre o Modo Design e pode ser arrastada) -->
+  <button class="dp-ball" id="dpBall" onclick="onBallClick()" title="Abrir Modo Design">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+  </button>
+
+  <div id="designSelection" class="hidden"></div>
+  <div id="designHover" class="hidden"></div>
+  <div class="dp-tip hidden" id="dpTip">Modo Design ativado — clique em um elemento e arraste ou redimensione.</div>
+
+<script>
+__JS_APP__
+</script>
+</body>
+</html>
