@@ -334,11 +334,26 @@ function panelsHTML(year, m){
     + '</div>';
 }
 
+/* ---------- HERO PADRONIZADO (todos os modelos) ---------- */
+function renderCalHero(year, m){
+  const plantSrc = customPlantImage || topImageSrc || PLANT_BANNERS[currentPlantBanner] || PLANT_BANNERS.b1;
+  let html = '<div class="cal-hero">';
+  html += '<div class="cal-hero-photo"><img src="'+plantSrc+'" alt="Foto institucional Progeral"></div>';
+  html += '<div class="cal-hero-logo"><img src="'+LOGO_PROGERAL+'" alt="Progeral"></div>';
+  html += '<div class="cal-hero-label">';
+  html += '<div class="hero-month">'+MESES_PT[m]+' '+year+'</div>';
+  html += '<div class="hero-sub">'+MESES_EN[m]+' · '+MESES_ES[m]+'</div>';
+  html += '<div class="hero-rule"></div>';
+  html += '</div></div>';
+  return html;
+}
+
 function renderClassicLike(year, m){
   const prev = shiftMonth(year, m, -1);
   uid++;
   const idMain = 'body-main-'+uid, idSec = 'body-sec-'+uid;
-  let html = '<div class="cal-wrap">';
+  let html = renderCalHero(year, m);
+  html += '<div class="cal-wrap">';
   html += '<div class="cal-col"><div class="title-box"><span>'+titleFor(year,m)+'</span></div>'+tableHTML(year,m,DIAS_FULL,idMain)+'</div>';
   html += '<div class="cal-col small"><div class="title-box"><span>'+titleFor(prev.y,prev.m)+'</span></div>'+tableHTML(prev.y,prev.m,DIAS_ABR,idSec)+panelsHTML(year,m)+'</div>';
   html += '</div>';
@@ -349,7 +364,8 @@ function renderClassicLike(year, m){
 function renderCompact(year, m){
   uid++;
   const idMain = 'body-main-'+uid;
-  let html = '<div class="compact-wrap"><div class="cal-col">';
+  let html = renderCalHero(year, m);
+  html += '<div class="compact-wrap"><div class="cal-col">';
   html += '<div class="title-box"><span>'+titleFor(year,m)+'</span></div>'+tableHTML(year,m,DIAS_FULL,idMain);
   html += '</div></div>';
   html += countriesFooterHTML();
@@ -361,7 +377,8 @@ function renderQuarterly(year, m){
   const next = shiftMonth(year, m, 1);
   uid++;
   const idPrev = 'body-p-'+uid, idCur = 'body-c-'+uid, idNext = 'body-n-'+uid;
-  let html = '<div class="cal-wrap triple">';
+  let html = renderCalHero(year, m);
+  html += '<div class="cal-wrap triple">';
   html += '<div class="cal-col third"><div class="title-box"><span>'+titleFor(prev.y,prev.m)+'</span></div>'+tableHTML(prev.y,prev.m,DIAS_ABR,idPrev)+'</div>';
   html += '<div class="cal-col third"><div class="title-box"><span>'+titleFor(year,m)+'</span></div>'+tableHTML(year,m,DIAS_ABR,idCur)+'</div>';
   html += '<div class="cal-col third"><div class="title-box"><span>'+titleFor(next.y,next.m)+'</span></div>'+tableHTML(next.y,next.m,DIAS_ABR,idNext)+'</div>';
@@ -373,19 +390,9 @@ function renderQuarterly(year, m){
 function renderDesk(year, m){
   uid++;
   const idMain = 'body-desk-'+uid;
-  const today = new Date();
-  const useToday = (today.getFullYear()===year && today.getMonth()===m);
-  const heroDay = useToday ? today.getDate() : 1;
-  const weekdayName = DIAS_SEMANA_PT[new Date(year,m,heroDay).getDay()];
-  let html = '<div class="desk-wrap">';
-  html += '<div class="desk-spiral">'+'<span></span>'.repeat(14)+'</div>';
+  let html = renderCalHero(year, m);
+  html += '<div class="desk-wrap">';
   html += '<div class="desk-hero">';
-  html += '<div class="desk-left">';
-  html += '<div class="eyebrow">Progeral Global</div>';
-  html += '<div class="bignum">'+String(heroDay).padStart(2,'0')+'</div>';
-  html += '<div class="weekday">'+weekdayName+'</div>';
-  html += '<div class="monthyear">'+MESES_PT[m]+' '+year+'</div>';
-  html += '</div>';
   html += '<div class="desk-right">'+tableHTML(year,m,DIAS_FULL,idMain)+'</div>';
   html += '</div>';
   html += panelsHTML(year, m);
@@ -489,22 +496,18 @@ function renderOriginal(year, m){
 
 function renderInto(cap, body, topB, botB, templateId, year, m){
   cap.setAttribute('data-grid-style', currentGridStyle);
+  topB.style.display = 'none';
+  botB.style.display = 'none';
   if(templateId === 'original'){
-    topB.style.display = 'none';
-    botB.style.display = 'none';
     body.innerHTML = renderOriginal(year, m);
-  } else {
-    topB.style.display = topImageSrc ? 'block' : 'none';
-    botB.style.display = bottomImageSrc ? 'block' : 'none';
-    if(templateId === 'classic' || templateId === 'minimal'){
-      body.innerHTML = renderClassicLike(year, m);
-    } else if(templateId === 'compact'){
-      body.innerHTML = renderCompact(year, m);
-    } else if(templateId === 'quarterly'){
-      body.innerHTML = renderQuarterly(year, m);
-    } else if(templateId === 'desk'){
-      body.innerHTML = renderDesk(year, m);
-    }
+  } else if(templateId === 'classic' || templateId === 'minimal'){
+    body.innerHTML = renderClassicLike(year, m);
+  } else if(templateId === 'compact'){
+    body.innerHTML = renderCompact(year, m);
+  } else if(templateId === 'quarterly'){
+    body.innerHTML = renderQuarterly(year, m);
+  } else if(templateId === 'desk'){
+    body.innerHTML = renderDesk(year, m);
   }
   if(typeof applyDesignOverrides === 'function') applyDesignOverrides(cap);
 }
